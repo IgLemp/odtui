@@ -5,11 +5,14 @@ import "core:terminal"
 import "core:terminal/ansi"
 import "core:os"
 import "core:time"
+import "core:log"
 
 
 main :: proc() {
-    hide_cursor()
-    defer show_cursor()
+    context.logger = log.create_console_logger()
+    
+    // hide_cursor()
+    // defer show_cursor()
 
     // cursor_move(20, 20)
     // print_line("Hello twat!", .Bold, .Red, Color_RGB{0, 255, 0})
@@ -18,20 +21,23 @@ main :: proc() {
     // cursor_move(0, 0)
 
     w1: Window
-    window_make(&w1, 20, 20, 5, 9)
+    window_make(&w1, 3, 3, 0, 0)
     defer window_delete(&w1)
-    window_fill(&w1, {'a', .Bold, .Red, .White})
+    window_fill(&w1, {'x', .Bold, .Red, .White})
 
     w2: Window
-    window_make(&w1, 20, 20, 9, 9)
-    defer window_delete(&w1)
-    window_fill(&w1, {'b', .Bold, .Blue, .White})
+    window_make(&w2, 1, 3, 1, 1)
+    defer window_delete(&w2)
+    window_fill(&w2, {'-', .Bold, .Blue, .White})
 
     // Oh no
-    window_blit(w1, w2)
     window_render(&w1)
+    window_render(&w2)
 
-    time.sleep(time.Second * 3)
+    cursor_move(0, 4)
+    window_blit(w2, w1)
+    // window_blit(w1, w2)
+    time.sleep(time.Second * 2)
 }
 
 
@@ -102,7 +108,7 @@ _print_bg_8 :: #force_inline proc(c: Color_8) {
 }
 
 
-cursor_move :: proc(x, y: int) { fmt.printf(ansi.CSI + "%d;%dH", y, x) }
+cursor_move :: proc(x, y: int) { fmt.printf(ansi.CSI + "%d;%dH", y + 1, x + 1) }
 
 hide_cursor        :: proc() { fmt.print(ansi.CSI + "?25l") }
 show_cursor        :: proc() { fmt.print(ansi.CSI + "?25h") }

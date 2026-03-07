@@ -1,5 +1,7 @@
 package odtui
 
+import "core:log"
+
 Text_Style :: enum {
     None,
     Bold,
@@ -68,7 +70,8 @@ window_fill :: proc(window: ^Window, g: Graph) {
 // Renders everything
 window_render :: proc(window: ^Window) {
     for i in 0..<len(window.buff) {
-        // TODO: Handle negative position case
+        if window.x + (i % window.w) < 0 { continue }
+        if window.y + (i / window.w) < 0 { continue }
         cursor_move(window.x + (i % window.w), window.y + (i / window.w))
         print_graph(window.buff[i])
     }
@@ -102,21 +105,29 @@ window_delete :: proc(window: ^Window) {
 }
 
 
+view_make :: proc(window: ^Window, view: ^Window) {
+    view^ = window^
+}
+
 // OPERATIONS /////////////////////////////////////////////////////////////////////////////////////////////////////////
 window_intersect :: proc(a, b: Window) -> (x, y, w, h: int) {
     x = max(a.x, b.x)
     y = max(a.y, b.y)
 
-    w = min(a.x + a.w, b.x + b.w)
-    h = min(a.y + a.h, b.y + b.h)
+    w = min(a.x + a.w - b.x, b.x + b.w - a.x)
+    h = min(a.y + a.h - b.y, b.y + b.h - a.y)
 
     return
 }
 
 
-lin_to_buff :: #force_inline proc(i, x0, y0, w, orig_w: int) -> (xp, yp: int) {
-    xp = x0 + (i % w)
-    yp = y0 + (i / w) * orig_w
+abs_to_win :: #force_inline proc(xa, ya: int, x0, y0: int) -> (int, int)
+    { return xa - x0, ya - y0 }
+
+lin_to_buff :: #force_inline proc(i, x0, y0, new_w, buff_w: int) -> (xp, yp: int) {
+    assert(x0 != buff_w - 1, "Starting position cannot be outside the window!")
+    xp =  x0 + (i % new_w)
+    yp = (y0 + (i / new_w)) * buff_w
     return
 }
 
@@ -180,21 +191,19 @@ window_diff :: proc(src: Window, dest: Window, diff: ^Window) -> (changes: int) 
 window_blit :: proc(src: Window, dest: Window) {
     x0, y0, w, h := window_intersect(src, dest)
 
-    for i in 0..=w*h {
-        src_x,  src_y  := lin_to_buff(i, x0, y0, w, src.w)
-        dest_x, dest_y := lin_to_buff(i, x0, y0, w, dest.w)
+    log.debugf("x0 = %d, y0 = %d, w = %d, h = %d", x0, y0, w, h)
+    // log.debug("src", absolute_to_window(x0, y0, src.x,  src.y))
+    // log.debug("dst", absolute_to_window(x0, y0, dest.x, dest.y))
+    if w <= 0 || h <= 0 { return }
+
+    for i in 0..<w*h {
+        src_x,  src_y  := lin_to_buff(i, abs_to_win(x0, y0, src.x,  src.y),  w, src.w)
+        dest_x, dest_y := lin_to_buff(i, abs_to_win(x0, y0, dest.x, dest.y), w, dest.w)
 
         p_src  := src_x  + src_y
         p_dest := dest_x + dest_y
 
-        s := src.buff[p_src]
-        d := src.buff[p_dest]
-        if s != d {
-            if s.r  != d.r  { dest.buff[i].r  = s.r  }
-            if s.st != d.st { dest.buff[i].st = s.st }
-            if s.bg != d.bg { dest.buff[i].bg = s.bg }
-            if s.fg != d.fg { dest.buff[i].fg = s.fg }
-        }
+        dest.buff[p_dest] = src.buff[p_src]
     }
 }
 
