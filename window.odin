@@ -114,8 +114,8 @@ window_intersect :: proc(a, b: Window) -> (x, y, w, h: int) {
     x = max(a.x, b.x)
     y = max(a.y, b.y)
 
-    w = min(a.x + a.w - b.x, b.x + b.w - a.x)
-    h = min(a.y + a.h - b.y, b.y + b.h - a.y)
+    w = min(a.x + a.w, b.x + b.w) - x
+    h = min(a.y + a.h, b.y + b.h) - y
 
     return
 }
@@ -125,7 +125,6 @@ abs_to_win :: #force_inline proc(xa, ya: int, x0, y0: int) -> (int, int)
     { return xa - x0, ya - y0 }
 
 lin_to_buff :: #force_inline proc(i, x0, y0, new_w, buff_w: int) -> (xp, yp: int) {
-    assert(x0 != buff_w - 1, "Starting position cannot be outside the window!")
     xp =  x0 + (i % new_w)
     yp = (y0 + (i / new_w)) * buff_w
     return
@@ -191,9 +190,6 @@ window_diff :: proc(src: Window, dest: Window, diff: ^Window) -> (changes: int) 
 window_blit :: proc(src: Window, dest: Window) {
     x0, y0, w, h := window_intersect(src, dest)
 
-    log.debugf("x0 = %d, y0 = %d, w = %d, h = %d", x0, y0, w, h)
-    // log.debug("src", absolute_to_window(x0, y0, src.x,  src.y))
-    // log.debug("dst", absolute_to_window(x0, y0, dest.x, dest.y))
     if w <= 0 || h <= 0 { return }
 
     for i in 0..<w*h {
