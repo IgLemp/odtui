@@ -20,24 +20,21 @@ main :: proc() {
     // print_line("Hello twat!", .Bold, .Red, .White)
     // cursor_move(0, 0)
 
-    w1: Window
-    window_make(&w1, 3, 3, 0, 0)
-    defer window_delete(&w1)
-    window_fill(&w1, {'x', .Bold, .Red, .White})
+    w1: Buffer
+    buffer_make(&w1, 24, 8, 0, 0)
+    defer buffer_delete(&w1)
+    buffer_fill(&w1, {' ', .Bold, .Red, .White})
 
-    w2: Window
-    window_make(&w2, 1, 3, 1, 1)
-    defer window_delete(&w2)
-    window_fill(&w2, {'-', .Bold, .Blue, .White})
+    w2: Buffer
+    buffer_make(&w2, 6, 12, 1, 1)
+    defer buffer_delete(&w2)
+    buffer_fill(&w2, {' ', .Bold, .Black, .White})
 
-    // Oh no
-    window_render(&w1)
-    window_render(&w2)
+    buffer_render(&w2)
 
-    cursor_move(0, 4)
-    window_blit(w2, w1)
-    // window_blit(w1, w2)
-    time.sleep(time.Second * 2)
+    cursor_move(0, 18)
+    // buffer_blit(w1, w2)
+    // time.sleep(time.Second * 2)
 }
 
 
@@ -81,6 +78,7 @@ _print_style :: #force_inline proc(st: Style) {
 
 _print_fg_8 :: #force_inline proc(c: Color_8) {
     switch c {
+    case .None:
     case .Black:   fmt.print(";30")
     case .Red:     fmt.print(";31")
     case .Green:   fmt.print(";32")
@@ -95,6 +93,7 @@ _print_fg_8 :: #force_inline proc(c: Color_8) {
 
 _print_bg_8 :: #force_inline proc(c: Color_8) {
     switch c {
+    case .None:
     case .Black:   fmt.print(";100")
     case .Red:     fmt.print(";101")
     case .Green:   fmt.print(";102")
