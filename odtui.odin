@@ -14,27 +14,24 @@ main :: proc() {
     // hide_cursor()
     // defer show_cursor()
 
-    // cursor_move(20, 20)
-    // print_line("Hello twat!", .Bold, .Red, Color_RGB{0, 255, 0})
-    // cursor_move(20, 21)
-    // print_line("Hello twat!", .Bold, .Red, .White)
-    // cursor_move(0, 0)
-
     w1: Buffer
-    buffer_make(&w1, 24, 8, 0, 0)
+    buffer_make(&w1, 12, 12, 6, 6)
     defer buffer_delete(&w1)
-    buffer_fill(&w1, {' ', .Bold, .Red, .White})
+    buffer_fill(&w1, {'a', .Bold, .Red, .White})
 
     w2: Buffer
-    buffer_make(&w2, 6, 12, 1, 1)
+    buffer_make(&w2, 12, 12, 1, 1)
     defer buffer_delete(&w2)
-    buffer_fill(&w2, {' ', .Bold, .Black, .White})
+    buffer_fill(&w2, {'b', .Bold, .Black, .White})
 
+    // buffer_write_line(&w2, "potato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntasty", .None, .None, .None, 8)
+    buffer_write_line_wrapping(&w2, "potato salad is very tasty\npotato salad is very tasty\n", .None, .None, .None, 2)
+
+    // buffer_blit(w1, w2)
     buffer_render(&w2)
+    // buffer_render(&w1)
 
     cursor_move(0, 18)
-    // buffer_blit(w1, w2)
-    // time.sleep(time.Second * 2)
 }
 
 

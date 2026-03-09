@@ -12,10 +12,6 @@ Text_Style :: enum {
     Dim,
 }
 
-/*
-Colors from the original 8-color palette.
-These should be supported everywhere this library is supported.
-*/
 Color_8 :: enum {
     None,
     Black,
@@ -28,10 +24,6 @@ Color_8 :: enum {
     White,
 }
 
-/*
-RGB color. This is should be supported by every modern terminal.
-In case you need to support an older terminals, use `Color_8` instead
-*/
 Color_RGB :: [3]u8
 
 Any_Color :: union {
@@ -87,14 +79,28 @@ buffer_write_graph :: proc(b: ^Buffer, g: Graph, x, y: int) {
 }
 
 buffer_write_line :: proc(b: ^Buffer, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+    if x >= b.w || y >= b.h { return }
+    y := y
+    i_offs := 0
+
     for r, i in str {
-        if x + i >= b.w { break }
-        b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, bg, fg}
+        if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
+        if r == '\n' { y += 1; i_offs = i + 1; continue }
+        if x + i - i_offs >= b.w { continue }
+        b.buff[lin_to_buff(i - i_offs, x, y, b.w, b.w)] = {r, st, bg, fg}
     }
 }
 
 buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+    if x >= b.w || y >= b.h { return }
+    x, y := x, y
+    i_offs := 0
+
     for r, i in str {
+        if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
+        // TODO: Fix this so the text overflows to proper x position.
+        //       The new line behaviour is also not as expected.
+        if r == '\n' { y += 1; i_offs = i + 1; continue }
         b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, bg, fg}
     }
 }
