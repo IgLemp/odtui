@@ -48,6 +48,10 @@ Graph :: struct {
     fg: Any_Color,
 }
 
+
+
+// The most basic primitive that can be displayed.
+// A foundation for other forms of displayable elements.
 Buffer :: struct {
     buff: []Graph,
     using sz:  struct { w, h: int },
@@ -98,8 +102,6 @@ buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Style, bg, fg: A
 
     for r, i in str {
         if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
-        // TODO: Fix this so the text overflows to proper x position.
-        //       The new line behaviour is also not as expected.
         if r == '\n' { y += 1; i_offs = i + 1; continue }
         b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, bg, fg}
     }
@@ -134,9 +136,9 @@ buffer_delete :: proc(buffer: ^Buffer) {
 }
 
 
-view_make :: proc(buffer: ^Buffer, view: ^Buffer) {
-    view^ = buffer^
-}
+// view_make :: proc(buffer: ^Buffer, view: ^Buffer) {
+//     view^ = buffer^
+// }
 
 // OPERATIONS /////////////////////////////////////////////////////////////////////////////////////////////////////////
 buffer_intersect :: proc(a, b: Buffer) -> (x, y, w, h: int) {
@@ -162,7 +164,7 @@ lin_to_buff :: #force_inline proc(i, x0, y0, new_w, buff_w: int) -> int {
 
 buffer_mask :: proc(src: ^Buffer, dest: ^Buffer, mask: ^Buffer) {
     x0, y0, w, h := buffer_intersect(src^, dest^)
-    assert(w != 0 && h != 0, "buffers do not overlap!")
+    when SAFEGUARDS { assert(w != 0 && h != 0, "buffers do not overlap!") }
     assert(mask.w >= w && mask.h >= h, "Mask size too small!")
 
     for i in 0..=w*h {

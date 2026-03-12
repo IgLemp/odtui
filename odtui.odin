@@ -8,30 +8,22 @@ import "core:time"
 import "core:log"
 
 
+SAFEGUARDS :: true
+
+
 main :: proc() {
-    context.logger = log.create_console_logger()
-    
+    context.logger = log.create_console_logger(log.Level.Debug, {.Line, .Procedure, .Terminal_Color, .Short_File_Path})
+
     // hide_cursor()
     // defer show_cursor()
 
-    w1: Buffer
-    buffer_make(&w1, 12, 12, 6, 6)
-    defer buffer_delete(&w1)
-    buffer_fill(&w1, {'a', .Bold, .Red, .White})
+    // text_overflow()
+    // window_behaviour_pos()
+    // window_behaviour_pos_wrap()
+    window_behaviour_cursor_wrap()
+    // window_behaviour_cursor()
 
-    w2: Buffer
-    buffer_make(&w2, 12, 12, 1, 1)
-    defer buffer_delete(&w2)
-    buffer_fill(&w2, {'b', .Bold, .Black, .White})
-
-    // buffer_write_line(&w2, "potato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntastypotato\nsalad\nis\ntasty", .None, .None, .None, 8)
-    buffer_write_line_wrapping(&w2, "potato salad is very tasty\npotato salad is very tasty\n", .None, .None, .None, 2)
-
-    // buffer_blit(w1, w2)
-    buffer_render(&w2)
-    // buffer_render(&w1)
-
-    cursor_move(0, 18)
+    cursor_move(0, 32)
 }
 
 
