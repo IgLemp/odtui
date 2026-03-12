@@ -69,9 +69,10 @@ window_behaviour_cursor_wrap :: proc() {
     window_make(&b, &w, b.w - 2, b.h - 2, 1, 1)
 
     window_fill(&w, {' ', .None, .None, .None})
-    window_write_line_wrapping(&w, "far land", .None, .None, .None)
-    window_write_line_wrapping(&w, "1234567", .None, .None, .None)
+    window_write_line_wrapping(&w, "far land\n", .None, .None, .None)
+    window_write_line_wrapping(&w, "123456789\n", .None, .None, .None)
     window_write_line_wrapping(&w, "abc", .None, .None, .None)
+    window_write_line_wrapping(&w, "qwertyuiopasdfg", .None, .None, .None)
     // window_write_line_wrapping(&w, "12345678901234567890", .None, .None, .None)
     // window_write_line_wrapping(&w, "abcdef", .None, .None, .None)
 
@@ -80,7 +81,7 @@ window_behaviour_cursor_wrap :: proc() {
 
 window_behaviour_cursor :: proc() {
     b: Buffer
-    buffer_make(&b, 7, 4, 2, 2)
+    buffer_make(&b, 11, 5, 2, 2)
     defer buffer_delete(&b)
     buffer_fill(&b, {' ', .Bold, .Red, .White})
 
@@ -88,7 +89,7 @@ window_behaviour_cursor :: proc() {
     window_make(&b, &w, b.w - 2, b.h - 2, 1, 1)
     window_fill(&w, {' ', .None, .None, .None})
 
-    window_write_line(&w, "potato", .None, .None, .None)
+    window_write_line(&w, "potato salad", .None, .None, .None)
     window_write_line(&w, "\nxyzwfg\n", .None, .None, .None)
     window_write_line(&w, "abcdef", .None, .None, .None)
 

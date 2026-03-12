@@ -20,8 +20,8 @@ main :: proc() {
     // text_overflow()
     // window_behaviour_pos()
     // window_behaviour_pos_wrap()
-    window_behaviour_cursor_wrap()
     // window_behaviour_cursor()
+    window_behaviour_cursor_wrap()
 
     cursor_move(0, 32)
 }

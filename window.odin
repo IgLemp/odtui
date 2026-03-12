@@ -101,8 +101,8 @@ window_write_line :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color)
 
     for r, i in str {
         real_i := lin_to_buff(
-            i - i_str_offs,
-            w.x + w.cx,
+            i - i_str_offs + w.cx,
+            w.x,
             w.y + w.cy,
             w.w,
             w.backing.w
@@ -112,8 +112,8 @@ window_write_line :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color)
 
         if r == '\n' {
             w.cy += 1; w.cx = 0 // set cursor position
-            i_str_offs += i + 1 // offset of runes in string
-            i_offs += i         // offset of shown characters needed to set the cx position
+            i_str_offs = i + 1  // offset of runes in string
+            i_offs = i          // offset of shown characters needed to set the cx position
             continue
         }
 
@@ -143,15 +143,14 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style, bg, fg: A
             w.backing.w
         )
 
-        log.debug(real_i)
+        if real_i > lin_to_buff(w.w * w.h - 1, w.x, w.y, w.w, w.backing.w) { break }
         i_end = i
 
         if r == '\n' {
             w.cy += i / w.w + 1 // we are on the line that we ended the writing on
             w.cx  = 0
-            i_str_offs += i + 1 // reset string position index to 0
-            i_offs += i
-            log.debug(w)
+            i_str_offs = i + 1  // reset string position index to 0
+            i_offs = i
             continue
         }
 
@@ -163,8 +162,6 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style, bg, fg: A
 
     w.cy += (i_end - i_offs + w.cx) / w.w
     w.cx  = (i_end - i_offs + w.cx) % w.w
-
-    log.debug(w)
 }
 
 
