@@ -13,6 +13,7 @@ Window :: struct {
 
 
 
+// MAINTENANCE PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////
 window_make :: proc(b: ^Buffer, window: ^Window, w: int = 0, h: int = 0, x: int = 0, y: int = 0) {
     window.backing = b
     window.x = x
@@ -29,7 +30,7 @@ window_make :: proc(b: ^Buffer, window: ^Window, w: int = 0, h: int = 0, x: int 
 
 
 
-// WRITING PROCEDURES /////////////////////////////////////////////////////////////////////////////////////////////////
+// WRITING PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////////
 window_fill :: proc(w: ^Window, g: Graph) {
     for i in 0..<w.w*w.h {
         w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)] = g
@@ -44,7 +45,7 @@ window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
 }
 
 // Cursor independent //----------------------------------------------------------------------------------------------//
-window_write_line_pos :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     y := y
     i_offs := 0
@@ -56,14 +57,15 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Co
         if r == '\n' { y += 1; i_offs = i + 1; continue }
         if x + i - i_offs >= w.w { continue }
 
-        if st != .None { w.backing.buff[real_i].st = st }
-        if fg != .None { w.backing.buff[real_i].fg = fg }
-        if bg != .None { w.backing.buff[real_i].bg = bg }
+        if st.st != .None { w.backing.buff[real_i].st = st.st }
+        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
+        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
         w.backing.buff[real_i].r = r
     }
 }
 
-window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+// TODO: This has inconsistent behaviour with the function above
+window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     x, y := x, y
     i_offs := 0
@@ -85,16 +87,16 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style, bg, f
         }
         if real_i > lin_to_buff(w.w*w.h, w.x, w.y, w.w, w.backing.w) { return }
 
-        if st != .None { w.backing.buff[real_i].st = st }
-        if fg != .None { w.backing.buff[real_i].fg = fg }
-        if bg != .None { w.backing.buff[real_i].bg = bg }
+        if st.st != .None { w.backing.buff[real_i].st = st.st }
+        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
+        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
         w.backing.buff[real_i].r = r
     }
 }
 
 
 // Cursor dependent --------------------------------------------------------------------------------------------------//
-window_write_line :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color) {
+window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}) {
     i_str_offs := 0
     i_offs := 0
     i_end := 0
@@ -120,16 +122,16 @@ window_write_line :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color)
         if w.x + w.cx + i - i_str_offs > w.w { continue }
         if w.cy > w.h - 1 { break }
 
-        if st != .None { w.backing.buff[real_i].st = st }
-        if fg != .None { w.backing.buff[real_i].fg = fg }
-        if bg != .None { w.backing.buff[real_i].bg = bg }
+        if st.st != .None { w.backing.buff[real_i].st = st.st }
+        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
+        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
         w.backing.buff[real_i].r = r
     }
 
     w.cx = i_end - i_offs
 }
 
-window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style, bg, fg: Any_Color) {
+window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}) {
     i_str_offs := 0
     i_offs := 0
     i_end := 0
@@ -154,9 +156,9 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style, bg, fg: A
             continue
         }
 
-        if st != .None { w.backing.buff[real_i].st = st }
-        if fg != .None { w.backing.buff[real_i].fg = fg }
-        if bg != .None { w.backing.buff[real_i].bg = bg }
+        if st.st != .None { w.backing.buff[real_i].st = st.st }
+        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
+        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
         w.backing.buff[real_i].r = r
     }
 
