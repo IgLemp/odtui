@@ -31,21 +31,17 @@ Any_Color :: union {
     Color_RGB,
 }
 
-Style :: enum u8 {
-    None,
-    Bold,
-    Italic,
-    Underline,
-    Crossed,
-    Inverted,
-    Dim,
+Style :: struct {
+    st: Text_Style,
+    bg: Any_Color,
+    fg: Any_Color,
 }
 
 Graph :: struct {
     r: rune,
-    st: Style,
-    bg: Any_Color,
+    st: Text_Style,
     fg: Any_Color,
+    bg: Any_Color,
 }
 
 
@@ -82,7 +78,7 @@ buffer_write_graph :: proc(b: ^Buffer, g: Graph, x, y: int) {
     b.buff[lin_to_buff(0, x, y, b.w, b.w)] = g
 }
 
-buffer_write_line :: proc(b: ^Buffer, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+buffer_write_line :: proc(b: ^Buffer, str: string, st: Text_Style, fg, bg: Any_Color, x: int = 0, y: int = 0) {
     if x >= b.w || y >= b.h { return }
     y := y
     i_offs := 0
@@ -91,11 +87,11 @@ buffer_write_line :: proc(b: ^Buffer, str: string, st: Style, bg, fg: Any_Color,
         if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
         if r == '\n' { y += 1; i_offs = i + 1; continue }
         if x + i - i_offs >= b.w { continue }
-        b.buff[lin_to_buff(i - i_offs, x, y, b.w, b.w)] = {r, st, bg, fg}
+        b.buff[lin_to_buff(i - i_offs, x, y, b.w, b.w)] = {r, st, fg, bg}
     }
 }
 
-buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Style, bg, fg: Any_Color, x: int = 0, y: int = 0) {
+buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Text_Style, fg, bg: Any_Color, x: int = 0, y: int = 0) {
     if x >= b.w || y >= b.h { return }
     x, y := x, y
     i_offs := 0
@@ -103,7 +99,7 @@ buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Style, bg, fg: A
     for r, i in str {
         if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
         if r == '\n' { y += 1; i_offs = i + 1; continue }
-        b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, bg, fg}
+        b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, fg, bg}
     }
 }
 
@@ -135,10 +131,6 @@ buffer_delete :: proc(buffer: ^Buffer) {
    delete(buffer.buff)
 }
 
-
-// view_make :: proc(buffer: ^Buffer, view: ^Buffer) {
-//     view^ = buffer^
-// }
 
 // OPERATIONS /////////////////////////////////////////////////////////////////////////////////////////////////////////
 buffer_intersect :: proc(a, b: Buffer) -> (x, y, w, h: int) {
