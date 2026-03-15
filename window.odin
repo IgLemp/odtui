@@ -18,12 +18,12 @@ window_make :: proc(b: ^Buffer, window: ^Window, w: int = 0, h: int = 0, x: int 
     window.backing = b
     window.x = x
     window.y = y
-    window.w = w if w != 0 else window.backing.w
-    window.h = h if h != 0 else window.backing.h
+    window.w = w if w != -1 else window.backing.w
+    window.h = h if h != -1 else window.backing.h
 
     when SAFEGUARDS {
-        assert(w <= window.backing.w, "Window width cannot be bigger than tat if the backing buffer!")
-        assert(h <= window.backing.h, "Window height cannot be bigger than tat if the backing buffer!")
+        assert(w <= window.backing.w, "Window width cannot be bigger than that of the backing buffer!")
+        assert(h <= window.backing.h, "Window height cannot be bigger than that of the backing buffer!")
     }
 }
 
@@ -119,7 +119,7 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, .None, .N
             continue
         }
 
-        if w.x + w.cx + i - i_str_offs > w.w { continue }
+        if w.x + w.cx + i - i_str_offs - 1 > w.w { continue }
         if w.cy > w.h - 1 { break }
 
         if st.st != .None { w.backing.buff[real_i].st = st.st }
