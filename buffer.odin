@@ -33,8 +33,8 @@ Any_Color :: union {
 
 Style :: struct {
     st: Text_Style,
-    bg: Any_Color,
     fg: Any_Color,
+    bg: Any_Color,
 }
 
 Graph :: struct {
@@ -49,7 +49,7 @@ Graph :: struct {
 // The most basic primitive that can be displayed.
 // A foundation for other forms of displayable elements.
 Buffer :: struct {
-    buff: []Graph,
+    buff: []Graph `fmt:"-"`,
     using sz:  struct { w, h: int },
     using pos: struct { x, y: int },
 }
