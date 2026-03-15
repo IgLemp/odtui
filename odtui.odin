@@ -8,7 +8,7 @@ import "core:time"
 import "core:log"
 
 
-SAFEGUARDS :: true
+SAFEGUARDS :: false
 
 
 main :: proc() {
@@ -20,16 +20,17 @@ main :: proc() {
     // text_overflow()
     // window_behaviour_pos()
     // window_behaviour_pos_wrap()
-    // window_behaviour_cursor()
-    window_behaviour_cursor_wrap()
+    window_behaviour_cursor()
+    // window_behaviour_cursor_wrap()
+    box_behaviour_borders()
 
     cursor_move(0, 32)
 }
 
 
 
-print_line :: proc(str: string, style: Style, bg, fg: Any_Color) {
-    for r in str { print_graph(Graph{r, style, bg, fg}) }
+print_line :: proc(str: string, style: Style = {.None, .None, .None}) {
+    for r in str { print_graph(Graph{r, style.st, style.fg, style.bg}) }
 }
 
 print_graph :: proc(g: Graph) {
@@ -52,7 +53,7 @@ print_graph :: proc(g: Graph) {
     fmt.print(ansi.CSI + "0m")
 }
 
-_print_style :: #force_inline proc(st: Style) {
+_print_style :: #force_inline proc(st: Text_Style) {
     switch st {
     case .None:      fmt.print("0")
     case .Bold:      fmt.print("1")
