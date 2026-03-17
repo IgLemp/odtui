@@ -5,9 +5,9 @@ import "core:log"
 
 
 Window :: struct {
-    backing: ^Buffer `fmt:"-"`,
     using sz:  struct {  w,  h: int }, // relative to backing buffer
     using pos: struct {  x,  y: int }, // <= backing buffer w, h
+    backing: ^Buffer `fmt:"-"`,
     using crs: struct { cx, cy: int }, // internal cursor
 }
 
@@ -95,7 +95,7 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
 }
 
 
-// Cursor dependent --------------------------------------------------------------------------------------------------//
+// Cursor dependent ------------------------------------------------------------------------------------------------- //
 window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}) {
     i_str_offs := 0
     i_offs := 0
