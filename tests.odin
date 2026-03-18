@@ -181,4 +181,20 @@ split_padded_test :: proc() {
 }
 
 
+alignment_test :: proc() {
+    b: Buffer
+    buffer_make(&b, 14, 9, 0, 1)
+    defer buffer_delete(&b)
+    buffer_fill(&b, {'.', .None, .None, .None})
+
+    m: Window; window_make(&b, &m, -1, -1, 0, 0)
+
+    w: Window; window_make(&b, &w, 6, 7)
+    center_horizontal(&m, &w)
+    center_vertical(&m, &w)
+    // align_right_elem(&m, &w)
+    window_fill(&w, {' ', .None, .None, .Blue})
+
+    buffer_render(&b)
+}
 

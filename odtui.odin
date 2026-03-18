@@ -27,8 +27,7 @@ main :: proc() {
     // box_behaviour_borders()
     // split_test()
     // split_padded_test()
-
-    split_padded_test()
+    // alignment_test()
 
     // time.sleep(time.Second * 2)
     // disable_alt_buffer()

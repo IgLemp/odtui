@@ -18,13 +18,46 @@ PADDING_ONE  :: Padding {.Left = 1, .Right = 1, .Down = 1, .Up = 1}
 PADDING_BOX  :: PADDING_ONE
 
 /// BASIC LAYOUT ///////////////////////////////////////////////////////////////////////////////////////////////////////
-center_elem :: proc(win: rawptr, elem: rawptr) { }
-align_left_elem :: proc(win: rawptr, elem: rawptr) { }
-align_right_elem :: proc(win: rawptr, elem: rawptr) { }
-align_top_elem :: proc(win: rawptr, elem: rawptr) { }
-align_bottom_elem :: proc(win: rawptr, elem: rawptr) { }
+center_horizontal :: proc(win: rawptr, elem: rawptr) {
+    w_rect := cast(^Rect)win
+    e_rect := cast(^Rect)elem // funny
+
+    e_rect.x = (w_rect.w - e_rect.w) / 2
+}
+
+center_vertical :: proc(win: rawptr, elem: rawptr) {
+    w_rect := cast(^Rect)win
+    e_rect := cast(^Rect)elem
+
+    e_rect.y = (w_rect.h - e_rect.h) / 2
+}
+
+align_left_elem :: proc(win: rawptr, elem: rawptr) {
+    (cast(^Rect)elem).x = (cast(^Rect)win).x
+}
+
+align_right_elem :: proc(win: rawptr, elem: rawptr) {
+    w_rect := cast(^Rect)win
+    e_rect := cast(^Rect)elem
+
+    e_rect.x = (w_rect.x + w_rect.w) - e_rect.w
+}
+
+align_top_elem :: proc(win: rawptr, elem: rawptr) {
+    (cast(^Rect)elem).y = (cast(^Rect)win).y
+}
+
+align_bottom_elem :: proc(win: rawptr, elem: rawptr) {
+    w_rect := cast(^Rect)win
+    e_rect := cast(^Rect)elem
+
+    e_rect.y = (w_rect.y + w_rect.h) - e_rect.h
+}
+
 
 // Splits ----------------------------------------------------------------------------------------------------------- //
+// NOTICE: Everything is calculated relative to `win` position (which is relative),
+//         which means that if you plug a `Buffer` here the function will *not work as expected*.
 split_horizontal :: proc(win: rawptr, elems: ..rawptr) {
     rect := cast(^Rect)win
     w, h := rect.w / len(elems), rect.h
@@ -54,8 +87,6 @@ split_vertical :: proc(win: rawptr, elems: ..rawptr) {
 
 
 // Padded ----------------------------------------------------------------------------------------------------------- //
-// NOTICE: Everything is calculated relative to `win` position (which is relative),
-//         which means that if you plug a `Buffer` here the function will *not work as expected*.
 split_horizontal_padded :: proc(win: rawptr, padding: Padding, inner_padded: bool = true, elems: ..rawptr) {
     rect := cast(^Rect)win
     x := rect.x
