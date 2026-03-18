@@ -3,8 +3,8 @@ package odtui
 import "core:log"
 
 Rect :: struct {
-    using sz:  struct { w, h: int },
     using pos: struct { x, y: int },
+    using sz:  struct { w, h: int },
 }
 
 Direction :: enum {

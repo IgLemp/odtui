@@ -5,8 +5,8 @@ import "core:log"
 
 
 Window :: struct {
-    using sz:  struct {  w,  h: int }, // relative to backing buffer
-    using pos: struct {  x,  y: int }, // <= backing buffer w, h
+    using pos: struct { x, y: int }, // <= backing buffer w, h
+    using sz:  struct { w, h: int }, // relative to backing buffer
     backing: ^Buffer `fmt:"-"`,
     using crs: struct { cx, cy: int }, // internal cursor
 }

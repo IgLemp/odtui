@@ -49,8 +49,8 @@ Graph :: struct {
 // The most basic primitive that can be displayed.
 // A foundation for other forms of displayable elements.
 Buffer :: struct {
-    using sz:  struct { w, h: int },
     using pos: struct { x, y: int },
+    using sz:  struct { w, h: int },
     buff: []Graph `fmt:"-"`,
 }
 
