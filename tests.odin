@@ -124,3 +124,61 @@ box_behaviour_borders :: proc() {
     buffer_render(&b)
 }
 
+
+split_test :: proc() {
+    b: Buffer
+    buffer_make(&b, 9*6, 9, 0, 1)
+    defer buffer_delete(&b)
+    buffer_fill(&b, {'.', .None, .None, .None})
+
+    w1: Window; window_make(&b, &w1, 0, 0)
+    w2: Window; window_make(&b, &w2, 0, 0)
+    w3: Window; window_make(&b, &w3, 0, 0)
+
+    split_horizontal(&b, &w1, &w2, &w3)
+    window_fill(&w1, {' ', .None, .None, .Red})
+    window_fill(&w2, {' ', .None, .None, .Blue})
+    window_fill(&w3, {' ', .None, .None, .Yellow})
+
+    window_write_line_wrapping(&w1, "potato salad is very tasty after a day or two")
+
+    buffer_render(&b)
+}
+
+
+split_padded_test :: proc() {
+    b: Buffer
+    buffer_make(&b, 14, 9, 0, 1)
+    defer buffer_delete(&b)
+    buffer_fill(&b, {'.', .None, .None, .None})
+
+    // Will shit itself if position doesnt allow for w > 0
+    // Doesn't seem to addect the vertical split for some reason
+    // TODO: investigate and write safeguards
+    // m: Window; window_make(&b, &m, -1, -1, 6, 0)
+    // m: Window; window_make(&b, &m, -1, -1, 2, 17)
+    m: Window; window_make(&b, &m, -1, -1, 0, 0)
+    w1: Window; window_make(&b, &w1, 0, 0)
+    w2: Window; window_make(&b, &w2, 0, 0)
+    w3: Window; window_make(&b, &w3, 0, 0)
+    
+    p: Padding = {.Left = 1, .Right = 1, .Down = 1, .Up = 1}
+    split_horizontal_padded(&m, p, true, &w1, &w2, &w3)
+    // split_vertical_padded(&m, p, true, &w1, &w2, &w3)
+
+    // log.debug(m)
+    // log.debug(w1)
+    // log.debug(w2)
+    // log.debug(w3)
+    
+    window_fill(&w1, {' ', .None, .None, .Red})
+    window_fill(&w2, {' ', .None, .None, .Blue})
+    window_fill(&w3, {' ', .None, .None, .Yellow})
+
+    window_write_line_wrapping(&w1, "potato salad is very tasty after a day or two")
+
+    buffer_render(&b)
+}
+
+
+
