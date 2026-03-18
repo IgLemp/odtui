@@ -18,8 +18,8 @@ window_make :: proc(b: ^Buffer, window: ^Window, w: int = 0, h: int = 0, x: int 
     window.backing = b
     window.x = x
     window.y = y
-    window.w = w if w != -1 else window.backing.w
-    window.h = h if h != -1 else window.backing.h
+    window.w = w if w != -1 else window.backing.w - x
+    window.h = h if h != -1 else window.backing.h - y
 
     when SAFEGUARDS {
         assert(w <= window.backing.w, "Window width cannot be bigger than that of the backing buffer!")
