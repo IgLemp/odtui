@@ -32,6 +32,17 @@ center_vertical :: proc(win: rawptr, elem: rawptr) {
     e_rect.y = (w_rect.h - e_rect.h) / 2
 }
 
+
+align_elem :: proc(win: rawptr, align: Direction, elem: rawptr) {
+    switch align {
+    case .Up:    align_top_elem   (win, elem)
+    case .Down:  align_bottom_elem(win, elem)
+    case .Left:  align_left_elem  (win, elem)
+    case .Right: align_right_elem (win, elem)
+    }
+}
+
+
 align_left_elem :: proc(win: rawptr, elem: rawptr) {
     (cast(^Rect)elem).x = (cast(^Rect)win).x
 }
