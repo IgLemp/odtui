@@ -72,13 +72,3 @@ _print_bg_8 :: #force_inline proc(c: Color_8) {
     fmt.print("")
 }
 
-
-cursor_move :: proc(x, y: int) { fmt.printf(ansi.CSI + "%d;%dH", y, x + 1) }
-
-hide_cursor        :: proc() { fmt.print(ansi.CSI + "?25l") }
-show_cursor        :: proc() { fmt.print(ansi.CSI + "?25h") }
-restore_screen     :: proc() { fmt.print(ansi.CSI + "?47l") }
-save_screen        :: proc() { fmt.print(ansi.CSI + "?47h") }
-enable_alt_buffer  :: proc() { fmt.print(ansi.CSI + "?1049h") }
-disable_alt_buffer :: proc() { fmt.print(ansi.CSI + "?1049l") }
-
