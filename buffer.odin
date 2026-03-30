@@ -1,6 +1,7 @@
 package odtui
 
 import "core:log"
+import "termctl"
 
 Text_Style :: enum {
     None,
@@ -67,8 +68,11 @@ buffer_render :: proc(buffer: ^Buffer) {
     for i in 0..<len(buffer.buff) {
         if buffer.x + (i % buffer.w) < 0 { continue }
         if buffer.y + (i / buffer.w) < 0 { continue }
-        // TODO: This is stupid, the cursor needs to move only at the end of the buffer
-        cursor_move(buffer.x + (i % buffer.w), buffer.y + (i / buffer.w))
+
+        // TODO: Save everything in string_builder and print everything at once
+        if i % buffer.w == 0
+            { termctl.cursor_move(buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
+
         print_graph(buffer.buff[i])
     }
 }
@@ -77,12 +81,15 @@ buffer_render :: proc(buffer: ^Buffer) {
 // NOTICE: Without a `temp` buffer this function will allocate using default allocator.
 // and then deallocate a temporary buffer, wich may be an unwanted behaviour.
 buffer_render_diff :: proc(src, dest: ^Buffer, temp: ^Buffer = nil) {
-    temp := temp
-    if temp == nil { temp = new(Buffer) }
-    defer if temp == nil { free(temp) }
+    temp_b: Buffer
+    if temp == nil { buffer_make(&temp_b, dest.w, dest.h) }
     
-    buffer_diff(src, dest, temp)
-    buffer_render(temp)
+    // TODO: Save everything in string_builder and print everything at once
+    buffer_diff(src, dest, &temp_b)
+    log.debug(temp_b)
+    buffer_render(&temp_b)
+
+    buffer_delete(&temp_b)
 }
 
 // Writes a single graph at x, y.
@@ -178,6 +185,12 @@ lin_to_buff :: #force_inline proc(i, x0, y0, new_w, buff_w: int) -> int {
     return xp + yp
 }
 
+buff_to_lin :: #force_inline proc(i, x0, y0, buff_w: int) -> (int, int) {
+    x := (i % buff_w) - x0
+    y := (i / buff_w) - y0
+    return x, y
+}
+
 // TODO: IMPLEMENT PROPER BEHAVIOUR!!!
 // Writes the position, size and changed graphs of the changed region to `mask` buffer.
 buffer_mask :: proc(src: ^Buffer, dest: ^Buffer, mask: ^Buffer) {
@@ -205,15 +218,36 @@ buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) {
 
     diff.x = x0
     diff.y = y0
-    
-    for i in 0..=w*h {
+    diff.w = w
+    diff.h = h
+
+    log.debug(buffer_intersect(src^, dest^))
+
+    first_change: int = -1
+    last_change:  int = -1
+
+    for i in 0..<w*h {
         p_src  := lin_to_buff(i, x0, y0, w, src.w)
         p_dest := lin_to_buff(i, x0, y0, w, dest.w)
 
         s := src.buff[p_src]
-        d := src.buff[p_dest]
-        if s != d { diff.buff[i] = s }
+        d := dest.buff[p_dest]
+        if s != d {
+            if first_change == -1 { first_change = i }
+            last_change = i
+
+            diff.buff[i] = s
+        }
     }
+
+    x_min, y_min := buff_to_lin(first_change, 0, 0, dest.w)
+    x_max, y_max := buff_to_lin(last_change,  0, 0, dest.w)
+
+    log.debug(buff_to_lin(first_change, 0, 0, dest.w))
+    log.debug(buff_to_lin(last_change,  0, 0, dest.w))
+
+    diff.pos = { x_min,         y_min }
+    diff.sz  = { x_max - x_min, y_max - y_min }
 
     return
 }
