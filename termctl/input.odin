@@ -1,10 +1,8 @@
-package odtui
+package termctl
 
 import "core:os"
 import "core:strconv"
 import "core:unicode"
-
-import "termctl"
 
 // TODO: Comment, Simplify, Rewrite
 
@@ -100,7 +98,7 @@ Mouse_Input :: struct {
 /// FUNCTIONS //////////////////////////////////////////////////////////////////
 
 read :: proc(buf: []u8) -> Input {
-    input, has_input := termctl.raw_read(buf)
+    input, has_input := raw_read(buf)
     if !has_input do return nil
 
     input_str := transmute(string)input
@@ -132,7 +130,7 @@ read_blocking :: proc(buf: []u8) -> Input {
 
 
 read_raw :: proc(buf: []u8) -> (input: string, ok: bool) {
-    raw, input_ok := termctl.raw_read(buf)
+    raw, input_ok := raw_read(buf)
     return cast(string)raw, input_ok
 }
 
@@ -152,7 +150,7 @@ read_raw_blocking :: proc(buf: []u8) -> (input: string, ok: bool) {
 //       For example, `.Escape` is either Esc, Ctrl + [ and Ctrl + 3 to the terminal.
 // TODO: Make some test to determine which inputs are processed
 //       to implement parsing mechanism for them to make the API more consistent.
-// Parses the termctl.raw bytes sent by the terminal in `Input`.
+// Parses the raw bytes sent by the terminal in `Input`.
 parse_keyboard_input :: proc( input: string ) -> ( keyboard_input: Keyboard_Input, ok: bool) {
     _alnum_to_key :: proc(r: rune) -> (key: Key, ok: bool) {
         switch r {
@@ -386,7 +384,7 @@ parse_keyboard_input :: proc( input: string ) -> ( keyboard_input: Keyboard_Inpu
 
 // Note: mouse input is not always guaranteed. The user might be running the program from
 //       a TTY or the terminal emulator might just not support mouse input.
-// Parses the termctl.raw bytes sent by the terminal in `Input`
+// Parses the raw bytes sent by the terminal in `Input`
 parse_mouse_input :: proc(input: string) -> (mouse_input: Mouse_Input, has_input: bool) {
     // the mouse input we support is SGR escape code based
     if len(input) < 6 do return

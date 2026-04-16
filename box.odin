@@ -7,6 +7,8 @@ import "core:log"
 //         instead of passing weird malformed windows.
 
 // MAINTENANCE PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////
+
+// Taked a potentially empty window and initialises it.
 box_make :: proc(b: ^Buffer, win: ^Window, w: int = 0, h: int = 0, x: int = 0, y: int = 0) {
     win.backing = b
 
