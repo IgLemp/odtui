@@ -1,13 +1,16 @@
-package odtui
+package termctl
 
 import "core:log"
 import "core:fmt"
 import "core:terminal"
 import "core:terminal/ansi"
 
+// TODO: Nuke this
 print_line :: proc(str: string, style: Style = {.None, .None, .None}) {
     for r in str { print_graph(Graph{r, style.st, style.fg, style.bg}) }
 }
+
+print_rune :: proc(r: rune) { fmt.print(r) }
 
 print_graph :: proc(g: Graph) {
     if (g.r == '\n') || (g.r == '\r') { return }

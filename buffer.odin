@@ -1,50 +1,8 @@
 package odtui
 
 import "core:log"
-import "termctl"
-
-Text_Style :: enum {
-    None,
-    Bold,
-    Italic,
-    Underline,
-    Crossed,
-    Inverted,
-    Dim,
-}
-
-Color_8 :: enum {
-    None,
-    Black,
-    Red,
-    Green,
-    Yellow,
-    Blue,
-    Magenta,
-    Cyan,
-    White,
-}
-
-Color_RGB :: [3]u8
-
-Any_Color :: union {
-    Color_8,
-    Color_RGB,
-}
-
-Style :: struct {
-    st: Text_Style,
-    fg: Any_Color,
-    bg: Any_Color,
-}
-
-Graph :: struct {
-    r: rune,
-    st: Text_Style,
-    fg: Any_Color,
-    bg: Any_Color,
-}
-
+import slc "core:slice"
+import ctl "termctl"
 
 
 // The most basic primitive that can be displayed.
@@ -59,8 +17,13 @@ Buffer :: struct {
 // WRITING PROCEDURES /////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Fills the buffer with a desired graph.
-buffer_fill :: proc(buffer: ^Buffer, g: Graph) {
-    for i in 0..<len(buffer.buff) { buffer.buff[i] = g }
+buffer_fill :: #force_inline proc(buffer: ^Buffer, g: Graph) {
+    slc.fill(buffer.buff, g)
+}
+
+// Zeroes the buffer.
+buffer_zero :: #force_inline proc(buffer: ^Buffer) {
+    slc.zero(buffer.buff)
 }
 
 // Renders everything to screen.
@@ -69,27 +32,37 @@ buffer_render :: proc(buffer: ^Buffer) {
         if buffer.x + (i % buffer.w) < 0 { continue }
         if buffer.y + (i / buffer.w) < 0 { continue }
 
+        // Nothing to print. Behaviour also needed for render_diff
+        // IMPORTANT: THIS DOESN'T WORK. LOOK INTO THAT!!!
+        // if buffer.buff[i].r == rune(0) { continue }
+
         // TODO: Save everything in string_builder and print everything at once
         if i % buffer.w == 0
-            { termctl.cursor_move(buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
+            { ctl.cursor_move(buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
 
-        print_graph(buffer.buff[i])
+        if i == 0 { print_graph(buffer.buff[i]); continue }
+
+        if buffer.buff[i - 1].st != buffer.buff[i].st ||
+           buffer.buff[i - 1].fg != buffer.buff[i].fg ||
+           buffer.buff[i - 1].bg != buffer.buff[i].bg
+            { ctl.print_graph(buffer.buff[i]) }
+        else
+            { ctl.print_rune(buffer.buff[i].r) }
     }
 }
 
 // Renders only changed regions.
 // NOTICE: Without a `temp` buffer this function will allocate using default allocator.
 // and then deallocate a temporary buffer, wich may be an unwanted behaviour.
-buffer_render_diff :: proc(src, dest: ^Buffer, temp: ^Buffer = nil) {
-    temp_b: Buffer
-    if temp == nil { buffer_make(&temp_b, dest.w, dest.h) }
+buffer_render_diff :: proc(src, dest: ^Buffer, temp: ^Buffer) {
+    assert(temp != nil, "The diff buffer is nil!")
     
     // TODO: Save everything in string_builder and print everything at once
-    buffer_diff(src, dest, &temp_b)
-    log.debug(temp_b)
-    buffer_render(&temp_b)
-
-    buffer_delete(&temp_b)
+    buffer_diff(src, dest, temp)
+    log.debug(src^)
+    log.debug(dest^)
+    log.debug(temp^)
+    buffer_render(temp)
 }
 
 // Writes a single graph at x, y.
