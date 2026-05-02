@@ -4,6 +4,7 @@ import "core:fmt"
 import "core:os"
 import "core:strings"
 import "core:terminal/ansi"
+import str "core:strings"
 
 @(private)
 orig_termstate: Terminal_State
@@ -30,7 +31,6 @@ Text_Style :: enum {
 }
 
 Color_8 :: enum {
-    None,
     Black,
     Red,
     Green,
@@ -84,7 +84,15 @@ set_term_mode :: proc(mode: Term_Mode) {
 }
 
 
-cursor_move :: proc(x, y: int) { fmt.printf(ansi.CSI + "%d;%dH", y, x + 1) }
+move_cursor :: proc(sb: ^strings.Builder, x, y: int) {
+    // cursor position -> "CSI" + "{x};{y}H"
+    str.write_string(sb, ansi.CSI)
+    // x and y are shifted by one position so that programmers can keep using 0 based indexing
+    str.write_int(sb, y + 1)
+    str.write_rune(sb, ';')
+    str.write_int(sb, x + 1)
+    str.write_rune(sb, 'H')
+}
 
 hide_cursor        :: proc() { fmt.print(ansi.CSI + "?25l") }
 show_cursor        :: proc() { fmt.print(ansi.CSI + "?25h") }

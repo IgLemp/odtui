@@ -2,6 +2,8 @@ package odtui
 
 import "core:log"
 
+// TODO: Add `io.Writer` interface for ease of use,
+//       mainly so we can use `fmt` package
 
 
 Window :: struct {
@@ -45,7 +47,7 @@ window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
 }
 
 // Cursor independent //----------------------------------------------------------------------------------------------//
-window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}, x: int = 0, y: int = 0) {
+window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     y := y
     i_offs := 0
@@ -57,15 +59,15 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, .None
         if r == '\n' { y += 1; i_offs = i + 1; continue }
         if x + i - i_offs >= w.w { continue }
 
-        if st.st != .None { w.backing.buff[real_i].st = st.st }
-        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
-        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
+        w.backing.buff[real_i].st = st.st
+        w.backing.buff[real_i].fg = st.fg
+        w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
     }
 }
 
 // TODO: This has inconsistent behaviour with the function above
-window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}, x: int = 0, y: int = 0) {
+window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     x, y := x, y
     i_offs := 0
@@ -87,16 +89,16 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
         }
         if real_i > lin_to_buff(w.w*w.h, w.x, w.y, w.w, w.backing.w) { return }
 
-        if st.st != .None { w.backing.buff[real_i].st = st.st }
-        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
-        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
+        w.backing.buff[real_i].st = st.st
+        w.backing.buff[real_i].fg = st.fg
+        w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
     }
 }
 
 
 // Cursor dependent ------------------------------------------------------------------------------------------------- //
-window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}) {
+window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}) {
     i_str_offs := 0
     i_offs := 0
     i_end := 0
@@ -122,16 +124,16 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, .None, .N
         if w.x + w.cx + i - i_str_offs - 1 > w.w { continue }
         if w.cy > w.h - 1 { break }
 
-        if st.st != .None { w.backing.buff[real_i].st = st.st }
-        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
-        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
+        w.backing.buff[real_i].st = st.st
+        w.backing.buff[real_i].fg = st.fg
+        w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
     }
 
     w.cx = i_end - i_offs
 }
 
-window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, .None, .None}) {
+window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}) {
     i_str_offs := 0
     i_offs := 0
     i_end := 0
@@ -156,9 +158,9 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
             continue
         }
 
-        if st.st != .None { w.backing.buff[real_i].st = st.st }
-        if st.fg != .None { w.backing.buff[real_i].fg = st.fg }
-        if st.bg != .None { w.backing.buff[real_i].bg = st.bg }
+        w.backing.buff[real_i].st = st.st
+        w.backing.buff[real_i].fg = st.fg
+        w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
     }
 

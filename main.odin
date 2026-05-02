@@ -4,10 +4,12 @@ import tcl "termctl"
 
 import "core:fmt"
 import "core:log"
-import itr "base:intrinsics"
+import str "core:strings"
 
 main :: proc() {
     context.logger = log.create_console_logger()
+
+    main_sb, _ := str.builder_make()
 
     main_b: Buffer
     term_sz := tcl.get_term_size()
@@ -22,7 +24,6 @@ main :: proc() {
     main_w: Window
     window_make(&main_b, &main_w, -1, -1)
 
-    window_write_line(&main_w, "AAAAAaaaaaaaaaaaaaaaaa", {.None, .White, .None})
-    buffer_render_diff(&main_b, &render_b, &diff_b)
-    // buffer_render(&main_b)
+    window_write_line(&main_w, "1234567890", {.None, nil, nil})
+    buffer_render(&main_b, &main_sb)
 }

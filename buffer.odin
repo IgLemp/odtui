@@ -1,8 +1,10 @@
 package odtui
 
 import "core:log"
+import str "core:strings"
 import slc "core:slice"
 import ctl "termctl"
+import "core:os"
 
 
 // The most basic primitive that can be displayed.
@@ -27,7 +29,7 @@ buffer_zero :: #force_inline proc(buffer: ^Buffer) {
 }
 
 // Renders everything to screen.
-buffer_render :: proc(buffer: ^Buffer) {
+buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
     for i in 0..<len(buffer.buff) {
         if buffer.x + (i % buffer.w) < 0 { continue }
         if buffer.y + (i / buffer.w) < 0 { continue }
@@ -36,33 +38,43 @@ buffer_render :: proc(buffer: ^Buffer) {
         // IMPORTANT: THIS DOESN'T WORK. LOOK INTO THAT!!!
         // if buffer.buff[i].r == rune(0) { continue }
 
-        // TODO: Save everything in string_builder and print everything at once
         if i % buffer.w == 0
-            { ctl.cursor_move(buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
+            { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
 
-        if i == 0 { print_graph(buffer.buff[i]); continue }
+        if i == 0 {
+            set_text_style(sb, { buffer.buff[i].st })
+            set_fg_color_style(sb, buffer.buff[i].fg)
+            set_bg_color_style(sb, buffer.buff[i].bg)
+            print_rune(sb, buffer.buff[i].r);
+            continue
+        }
 
-        if buffer.buff[i - 1].st != buffer.buff[i].st ||
-           buffer.buff[i - 1].fg != buffer.buff[i].fg ||
-           buffer.buff[i - 1].bg != buffer.buff[i].bg
-            { ctl.print_graph(buffer.buff[i]) }
-        else
-            { ctl.print_rune(buffer.buff[i].r) }
+        if buffer.buff[i - 1].st != buffer.buff[i].st
+            { set_text_style(sb, { buffer.buff[i].st }) }
+        if buffer.buff[i - 1].fg != buffer.buff[i].fg
+            { set_fg_color_style(sb, buffer.buff[i].fg) }
+        if buffer.buff[i - 1].bg != buffer.buff[i].bg
+            { set_bg_color_style(sb, buffer.buff[i].bg) }
+
+        print_rune(sb, buffer.buff[i].r)
     }
+
+    os.write_strings(os.stdout, str.to_string(sb^))
+    str.builder_reset(sb)
 }
 
 // Renders only changed regions.
 // NOTICE: Without a `temp` buffer this function will allocate using default allocator.
 // and then deallocate a temporary buffer, wich may be an unwanted behaviour.
-buffer_render_diff :: proc(src, dest: ^Buffer, temp: ^Buffer) {
-    assert(temp != nil, "The diff buffer is nil!")
+// FIX: FOR SOME REASON IT PRINTS LAST LETTER OF A LINE IN THE NEXT ONE
+buffer_render_diff :: proc(src, dest: ^Buffer, diff: ^Buffer, sb: ^str.Builder) {
+    assert(diff != nil, "The diff buffer is nil!")
     
-    // TODO: Save everything in string_builder and print everything at once
-    buffer_diff(src, dest, temp)
-    log.debug(src^)
-    log.debug(dest^)
-    log.debug(temp^)
-    buffer_render(temp)
+    buffer_diff(src, dest, diff)
+    // log.debug(src^)
+    // log.debug(dest^)
+    // log.debug(diff^)
+    buffer_render(diff, sb)
 }
 
 // Writes a single graph at x, y.
@@ -194,7 +206,7 @@ buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) {
     diff.w = w
     diff.h = h
 
-    log.debug(buffer_intersect(src^, dest^))
+    // log.debug(buffer_intersect(src^, dest^))
 
     first_change: int = -1
     last_change:  int = -1
@@ -216,8 +228,8 @@ buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) {
     x_min, y_min := buff_to_lin(first_change, 0, 0, dest.w)
     x_max, y_max := buff_to_lin(last_change,  0, 0, dest.w)
 
-    log.debug(buff_to_lin(first_change, 0, 0, dest.w))
-    log.debug(buff_to_lin(last_change,  0, 0, dest.w))
+    // log.debug(buff_to_lin(first_change, 0, 0, dest.w))
+    // log.debug(buff_to_lin(last_change,  0, 0, dest.w))
 
     diff.pos = { x_min,         y_min }
     diff.sz  = { x_max - x_min, y_max - y_min }
@@ -231,6 +243,7 @@ buffer_blit :: proc(src: Buffer, dest: Buffer) {
 
     if w <= 0 || h <= 0 { return }
 
+    // TODO: This can by optimised by doing `memcpy` on every row
     for i in 0..<w*h {
         p_src  := lin_to_buff(i, abs_to_win(x0, y0, src.x,  src.y),  w, src.w)
         p_dest := lin_to_buff(i, abs_to_win(x0, y0, dest.x, dest.y), w, dest.w)

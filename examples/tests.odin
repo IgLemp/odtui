@@ -32,7 +32,7 @@ blit_behavour :: proc() {
     t.buffer_blit(b1, b2)
     t.buffer_render(&b2)
 
-    tctl.cursor_move(0, 18)
+    tctl.move_cursor(0, 18)
 }
 
 window_behaviour_pos_wrap :: proc() {
