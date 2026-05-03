@@ -24,7 +24,7 @@ box_make :: proc(b: ^Buffer, win: ^Window, w: int = 0, h: int = 0, x: int = 0, y
 
 // WRITING PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////////
 
-box_write_borders :: proc(w: ^Window, type: sym.Border_Set, style: Style = {.None, nil, nil}) {
+box_write_borders :: proc(w: ^Window, type: sym.Border_Set = sym.BORDER_PLAIN, style: Style = {.None, nil, nil}) {
     when SAFEGUARDS {
         assert(lin_to_buff(0, -1, -1, w.w + 2, w.backing.w) >= 0, "Box bounderies are outside the buffer!")
         // assert(lin_to_buff(0, w.w - 1, w.w - 1, w.w + 2, w.backing.w) <= 0, "Box bounderies are outside the buffer!")
