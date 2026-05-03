@@ -30,33 +30,39 @@ buffer_zero :: #force_inline proc(buffer: ^Buffer) {
 
 // Renders everything to screen.
 buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
-    for i in 0..<len(buffer.buff) {
+    void: bool = false
+
+    for g, i in buffer.buff[:] {
         if buffer.x + (i % buffer.w) < 0 { continue }
         if buffer.y + (i / buffer.w) < 0 { continue }
 
         // Nothing to print. Behaviour also needed for render_diff
-        // IMPORTANT: THIS DOESN'T WORK. LOOK INTO THAT!!!
-        // if buffer.buff[i].r == rune(0) { continue }
+        if g.r == rune(0) { void = true; continue }
 
+        // Move cursor to next line
         if i % buffer.w == 0
             { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
 
+        if void == true && g.r != rune(0)
+            { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
+
+        // First rune
         if i == 0 {
-            set_text_style(sb, { buffer.buff[i].st })
-            set_fg_color_style(sb, buffer.buff[i].fg)
-            set_bg_color_style(sb, buffer.buff[i].bg)
-            print_rune(sb, buffer.buff[i].r);
+            set_text_style(sb, { g.st })
+            set_fg_color_style(sb, g.fg)
+            set_bg_color_style(sb, g.bg)
+            print_rune(sb, g.r);
             continue
         }
 
-        if buffer.buff[i - 1].st != buffer.buff[i].st
-            { set_text_style(sb, { buffer.buff[i].st }) }
-        if buffer.buff[i - 1].fg != buffer.buff[i].fg
-            { set_fg_color_style(sb, buffer.buff[i].fg) }
-        if buffer.buff[i - 1].bg != buffer.buff[i].bg
-            { set_bg_color_style(sb, buffer.buff[i].bg) }
+        if buffer.buff[i - 1].st != g.st
+            { set_text_style(sb, { g.st }) }
+        if buffer.buff[i - 1].fg != g.fg
+            { set_fg_color_style(sb, g.fg) }
+        if buffer.buff[i - 1].bg != g.bg
+            { set_bg_color_style(sb, g.bg) }
 
-        print_rune(sb, buffer.buff[i].r)
+        print_rune(sb, g.r)
     }
 
     os.write_strings(os.stdout, str.to_string(sb^))
