@@ -9,21 +9,27 @@ import str "core:strings"
 main :: proc() {
     context.logger = log.create_console_logger()
 
-    main_sb, _ := str.builder_make()
+    tui_ctx: TUI_Context
+    default_context_make(&tui_ctx)
 
-    main_b: Buffer
-    term_sz := tcl.get_term_size()
-    buffer_make(&main_b, term_sz.w, term_sz.h) 
+    tcl.set_term_mode(.Raw)
 
-    diff_b: Buffer
-    buffer_make(&diff_b, main_b.w, main_b.h)
-
-    render_b: Buffer
-    buffer_make(&render_b, main_b.w, main_b.h)
-    
     main_w: Window
-    window_make(&main_b, &main_w, -1, -1)
+    box_make(&tui_ctx.main_buffer, &main_w)
+    box_write_borders(&main_w)
 
     window_write_line(&main_w, "1234567890", {.None, nil, nil})
-    buffer_render(&main_b, &main_sb)
+    render(&tui_ctx)
+
+    inp_buff: [1024]u8
+    main_loop: for {
+        input := tcl.read(inp_buff[:])
+        #partial switch inp in input {
+        case Keyboard_Input:
+            if inp.key == .Q { break main_loop }
+        }
+    }
+
+    tcl.set_term_mode(.Restored)
+    tcl.show_cursor()
 }
