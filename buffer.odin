@@ -119,19 +119,19 @@ buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Text_Style, fg, 
 
 // Initializes a buffer with a backing graph array.
 // Provided with no backing slice it will make its own with default allocator.
-buffer_make :: proc(buffer: ^Buffer, w, h: int, x: int = 0, y: int = 0, buff: []Graph = nil) {
+buffer_make :: proc(buffer: ^Buffer, w, h: int, x: int = 0, y: int = 0, backing: []Graph = nil) {
     buffer.w = w
     buffer.h = h
 
     buffer.x = x
     buffer.y = y
 
-    if buff == nil {
+    if backing == nil {
         new_buff := make([]Graph, w * h)
         buffer.buff = new_buff
     } else {
-        when SAFEGUARDS { assert(cast(int)len(buff) >= w * h, "Buffer not too small!") }
-        buffer.buff = buff
+        when SAFEGUARDS { assert(cast(int)len(backing) >= w * h, "Buffer not too small!") }
+        buffer.buff = backing
     }
 }
 
@@ -250,5 +250,11 @@ buffer_blit :: proc(src: Buffer, dest: Buffer) {
 
         dest.buff[p_dest] = src.buff[p_src]
     }
+}
+
+// Resizes the buffer. Requires everything to be rerendered after resize.
+buffer_resize :: proc(buffer: ^Buffer, w, h: int, backing: []Graph = nil) {
+    buffer_delete(buffer)
+    buffer_make(buffer, w, h, buffer.x, buffer.y, backing)
 }
 
