@@ -1,6 +1,5 @@
 package termctl
 
-import ".."
 import "core:os"
 import "core:sys/windows"
 
@@ -74,7 +73,7 @@ get_term_size :: proc() -> Rect {
     w := uint(sbi.srWindow.Right - sbi.srWindow.Left) + 1
     h := uint(sbi.srWindow.Bottom - sbi.srWindow.Top) + 1
 
-    return { 0, 0, w, h }
+    return { {0, 0}, {cast(int)w, cast(int)h} }
 }
 
 
