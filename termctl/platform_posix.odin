@@ -18,17 +18,20 @@ change_terminal_mode :: proc(mode: Term_Mode) {
     termstate, ok := get_terminal_state()
     if !ok { panic("failed to get terminal state") }
 
+    orig_termstate = termstate
     raw := termstate.state
 
     switch mode {
     case .Raw:
         raw.c_lflag -= {.ECHO, .ICANON, .ISIG, .IEXTEN}
         raw.c_iflag -= {.ICRNL, .IXON}
-        raw.c_oflag -= {.OPOST}
+
+        raw.c_oflag |= {.OPOST, .ONLCR}
 
         // probably meaningless on modern terminals but apparently it's good practice
         raw.c_iflag -= {.BRKINT, .INPCK, .ISTRIP}
         raw.c_cflag |= {.CS8}
+
 
     case .Cbreak:
         raw.c_lflag -= {.ECHO, .ICANON}
