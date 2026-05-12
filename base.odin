@@ -11,8 +11,11 @@ TUI_Context :: struct {
 }
 
 
-default_context_make :: proc(ctx: ^TUI_Context) {
-    term_sz := tcl.get_term_size()
+default_context_make :: proc(ctx: ^TUI_Context, w: int = -1, h: int = -1) {
+    term_sz: Rect
+    if w == -1 || h == -1 { term_sz = tcl.get_term_size() }
+    else                  { term_sz = {{0, 0}, {w, h}} }
+
     buffer_make(&ctx.main_buffer, term_sz.w, term_sz.h)
     buffer_make(&ctx.diff_buffer, term_sz.w, term_sz.h)
 
