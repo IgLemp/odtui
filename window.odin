@@ -50,20 +50,22 @@ window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
 window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     y := y
-    i_offs := 0
+    col := 0
 
     for r, i in str {
-        real_i := lin_to_buff(i - i_offs, w.x + x, w.y + y, w.w, w.backing.w)
+        real_i := lin_to_buff(col, w.x + x, w.y + y, w.w, w.backing.w)
 
         if real_i > w.backing.w * w.backing.h { return }
         if r == '\r' { continue }
-        if r == '\n' { y += 1; i_offs = i + 1; continue }
-        if x + i - i_offs >= w.w { continue }
+        if r == '\n' { y += 1; col = 0; continue }
+        if x + col >= w.w { continue }
 
         w.backing.buff[real_i].st = st.st
         w.backing.buff[real_i].fg = st.fg
         w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
+
+        col += 1
     }
 }
 
@@ -71,30 +73,26 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, 
 window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
     x, y := x, y
-    i_offs := 0
+    col := 0
 
     for r, i in str {
-        real_i := lin_to_buff(
-            i - i_offs + x,
-            w.x,
-            w.y + y,
-            w.w,
-            w.backing.w
-        )
-
         if r == '\r' { continue }
         if r == '\n' {
             y += i / w.w + 1
-            i_offs += i + 1
+            col = 0
             x = 0
             continue
         }
+
+        real_i := lin_to_buff(col, w.x + x, w.y + y, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w*w.h, w.x, w.y, w.w, w.backing.w) { return }
 
         w.backing.buff[real_i].st = st.st
         w.backing.buff[real_i].fg = st.fg
         w.backing.buff[real_i].bg = st.bg
         w.backing.buff[real_i].r = r
+
+        col += 1
     }
 }
 
@@ -106,12 +104,13 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
     for r in str {
         if r == '\r' { continue }
         if r == '\n' {
-            w.cy += 1; w.cx = 0
+            w.cy += 1
+            w.cx = 0
             col = 0
             continue
         }
 
-        if w.x + w.cx + col >= w.w { continue }
+        if w.x + w.cx + col > w.w { continue }
         if w.cy > w.h - 1 { break }
 
         real_i := lin_to_buff(col, w.x + w.cx, w.y + w.cy, w.w, w.backing.w)
