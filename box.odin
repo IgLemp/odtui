@@ -12,10 +12,10 @@ import "core:log"
 box_make :: proc(b: ^Buffer, win: ^Window, w: int = 0, h: int = 0, x: int = 0, y: int = 0) {
     win.backing = b
 
-    win.x = x + 1 if x != 0 else x + 1
-    win.y = y + 1 if y != 0 else y + 1
-    win.w = w - 2 if w != 0 else b.w - 2 - x
-    win.h = h - 2 if h != 0 else b.h - 2 - y
+    win.x = x + 1 if x != -1 else x + 1
+    win.y = y + 1 if y != -1 else y + 1
+    win.w = w - 2 if w != -1 else b.w - 2 - x
+    win.h = h - 2 if h != -1 else b.h - 2 - y
 
     if win.w < 0 { win.w = 0 }
     if win.h < 0 { win.h = 0 }
