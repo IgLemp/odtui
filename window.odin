@@ -3,8 +3,6 @@ package odtui
 import "core:log"
 import "core:io"
 
-// TODO: Add `io.Writer` interface for ease of use,
-//       mainly so we can use `fmt` package
 
 
 Window :: struct {
@@ -110,10 +108,10 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
             continue
         }
 
-        if w.x + w.cx + col > w.w { continue }
+        if w.cx + col >= w.w { continue }
         if w.cy > w.h - 1 { break }
 
-        real_i := lin_to_buff(col, w.x + w.cx, w.y + w.cy, w.w, w.backing.w)
+        real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
         w.backing.buff[real_i].st = st.st
         w.backing.buff[real_i].fg = st.fg
         w.backing.buff[real_i].bg = st.bg
@@ -137,7 +135,7 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
             continue
         }
 
-        real_i := lin_to_buff(col, w.x + w.cx, w.y + w.cy, w.w, w.backing.w)
+        real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w * w.h - 1, w.x, w.y, w.w, w.backing.w) { break }
 
         w.backing.buff[real_i].st = st.st
