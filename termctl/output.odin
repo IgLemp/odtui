@@ -49,6 +49,7 @@ _get_color_8_code :: proc(c: Color_8, is_bg: bool) -> uint {
     case .Magenta: code = 35
     case .Cyan:    code = 36
     case .White:   code = 37
+    case .Reset:   code = 39
     }
 
     if is_bg do code += 10

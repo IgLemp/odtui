@@ -13,6 +13,9 @@ Input :: union {
     Mouse_Input,
 }
 
+// TODO: It'd be nice if we had a way to check or take a rune directly,
+//        because I cannot input 'ł', 'ć' or 'ż', and I'm trying to write
+//        a slur in Polish because of frustration and I can't...
 Key :: enum {
     None,
     // Arrows

@@ -39,6 +39,7 @@ Color_8 :: enum {
     Magenta,
     Cyan,
     White,
+    Reset,
 }
 
 Color_RGB :: [3]u8
