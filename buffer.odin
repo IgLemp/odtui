@@ -70,17 +70,14 @@ buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
 }
 
 // Renders only changed regions.
-// NOTICE: Without a `temp` buffer this function will allocate using default allocator.
-// and then deallocate a temporary buffer, wich may be an unwanted behaviour.
-// FIX: FOR SOME REASON IT PRINTS LAST LETTER OF A LINE IN THE NEXT ONE
+// BUG: Still doesnt work and I don't know why.
 buffer_render_diff :: proc(src, dest: ^Buffer, diff: ^Buffer, sb: ^str.Builder) {
     assert(diff != nil, "The diff buffer is nil!")
-    
-    buffer_diff(src, dest, diff)
-    // log.debug(src^)
-    // log.debug(dest^)
-    // log.debug(diff^)
-    buffer_render(diff, sb)
+
+    buffer_zero(diff)
+    retb := buffer_diff(src, dest, diff)
+    // log.debug(retb)
+    buffer_render(&retb, sb)
 }
 
 // Writes a single graph at x, y.
@@ -196,23 +193,22 @@ buffer_mask :: proc(src: ^Buffer, dest: ^Buffer, mask: ^Buffer) {
 
         s := src.buff[p_src]
         d := src.buff[p_dest]
-        if s != d { mask.buff[p_mask].fg = s.fg }
+        if s != d { mask.buff[p_mask] = s }
     }
 }
 
 
 // IMPORTANT: Expects the dest and diff buffers to be the same size.
 // Calculates diff od `src` and `dest` buffer, saving the result in `diff`.
-buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) {
+buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) -> (retb: Buffer) {
     x0, y0, w, h := buffer_intersect(src^, dest^)
-    assert(cast(int)len(diff.buff) <= w*h, "Mask size too small!")
+    assert(cast(int)len(diff.buff) >= w*h, "Mask size too small!")
 
-    diff.x = x0
-    diff.y = y0
-    diff.w = w
-    diff.h = h
-
-    // log.debug(buffer_intersect(src^, dest^))
+    retb.x = x0
+    retb.y = y0
+    retb.w = w
+    retb.h = h
+    retb.buff = diff.buff
 
     first_change: int = -1
     last_change:  int = -1
@@ -231,14 +227,22 @@ buffer_diff :: proc(src: ^Buffer, dest: ^Buffer, diff: ^Buffer) {
         }
     }
 
+    if first_change == -1 {
+        // Nothing was changed
+        retb.pos = { 0, 0 }
+        retb.sz  = { 0, 0 }
+        return
+    }
+
+    retb.buff = diff.buff[first_change:last_change + 1]
+
     x_min, y_min := buff_to_lin(first_change, 0, 0, dest.w)
     x_max, y_max := buff_to_lin(last_change,  0, 0, dest.w)
 
-    // log.debug(buff_to_lin(first_change, 0, 0, dest.w))
-    // log.debug(buff_to_lin(last_change,  0, 0, dest.w))
-
-    diff.pos = { x_min,         y_min }
-    diff.sz  = { x_max - x_min, y_max - y_min }
+    // TODO: I don't know or remember why it doesn't work without `+ 1`,
+    //       so check why that is.
+    retb.pos = { x_min,             y_min }
+    retb.sz  = { x_max - x_min + 1, y_max - y_min + 1 }
 
     return
 }
