@@ -30,6 +30,7 @@ buffer_zero :: #force_inline proc(buffer: ^Buffer) {
 
 // Renders everything to screen.
 buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
+    if buffer.w == 0 || buffer.h == 0 { return }
     void: bool = false
 
     for g, i in buffer.buff[:] {
@@ -44,7 +45,7 @@ buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
             { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
 
         if void == true && g.r != rune(0)
-            { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
+            { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)); void = false }
 
         // First rune
         if i == 0 {
