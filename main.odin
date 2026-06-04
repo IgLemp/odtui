@@ -1,5 +1,6 @@
 package odtui
 
+import "core:unicode/utf8"
 import tcl "termctl"
 import sym "symbols"
 
@@ -11,26 +12,42 @@ main :: proc() {
     context.logger = log.create_console_logger(.Debug, {.Level, .Procedure, .Terminal_Color})
 
     tui_ctx: TUI_Context
-    default_context_make(&tui_ctx, 20, 20)
+    default_context_make(&tui_ctx)
 
     tcl.set_term_mode(.Raw)
 
     main_w: Window
+    secn_w: Window
     window_make(&tui_ctx.main_buffer, &main_w, -1, -1)
+    window_make(&tui_ctx.main_buffer, &secn_w, -1, -1)
 
-    window_write_line(&main_w, "1234567890abcdef\n", {.None, nil, nil})
+    split_horizontal_padded(&main_w, PADDING_BOX, false, &main_w, &secn_w)
 
-    writer := window_to_writer(&main_w, true)
+    box_write_borders(&main_w)
+    box_write_borders(&secn_w)
 
-    render(&tui_ctx)
+    m_writer := window_to_writer(&main_w, true)
+    s_writer := window_to_writer(&secn_w, false)
+
+    fmt.wprintln(s_writer, "pot")
+    render_diff(&tui_ctx)
+    fmt.wprintln(m_writer, "prt")
+    render_diff(&tui_ctx)
 
     inp_buff: [1024]u8
     main_loop: for {
-        input := tcl.read(inp_buff[:])
+        input := read(inp_buff[:])
+
         #partial switch inp in input {
         case Keyboard_Input:
-            if inp.key == .Q { break main_loop }
-            fmt.wprintf(writer, "%v", inp.key)
+            if inp.key == 'q' && inp.mod == .Shift { break main_loop }
+            if inp.key == 'c' && inp.mod == .Shift { window_fill(&secn_w, {' ', .None, nil, nil}); secn_w.crs = {0, 0} }
+            if secn_w.cy == secn_w.h { window_fill(&secn_w, {' ', .None, nil, nil}); secn_w.cy = 0 }
+            fmt.wprintfln(s_writer, "%v", inp)
+            render(&tui_ctx)
+        case Mouse_Input:
+            if main_w.cy == main_w.h { window_fill(&main_w, {' ', .None, nil, nil}); main_w.cy = 0 }
+            fmt.wprintfln(m_writer, "%v", inp.pos)
             render(&tui_ctx)
         }
     }
