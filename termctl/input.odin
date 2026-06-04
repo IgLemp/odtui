@@ -1,5 +1,7 @@
 package termctl
 
+import utf8 "core:unicode/utf8"
+import unic "core:unicode"
 import "core:os"
 import "core:strconv"
 import "core:unicode"
@@ -13,55 +15,21 @@ Input :: union {
     Mouse_Input,
 }
 
-// TODO: It'd be nice if we had a way to check or take a rune directly,
-//        because I cannot input 'ł', 'ć' or 'ż', and I'm trying to write
-//        a slur in Polish because of frustration and I can't...
-Key :: enum {
+Key :: rune
+
+Special_Key :: enum {
     None,
     // Arrows
     Arrow_Left, Arrow_Right, Arrow_Up, Arrow_Down,
     // Special keys
     Page_Up, Page_Down,
     Home, End,
+    Menu,
     Insert, Delete,
     Escape,
     Enter, Tab, Backspace,
     // Functions keys
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
-    // Keys
-    Num_0, Num_1, Num_2, Num_3, Num_4,
-    Num_5, Num_6, Num_7, Num_8, Num_9,
-    A, B, C, D, E, F, G, H,
-    I, J, K, L, M, N, O, P,
-    Q, R, S, T, U, V, W, X,
-    Y, Z,
-    Minus, Plus, Equal,
-    // Parens
-    Open_Paren, Close_Paren,
-    Open_Curly_Bracket, Close_Curly_Bracket,
-    Open_Square_Bracket, Close_Square_Bracket,
-    // Other keys
-    Colon, Semicolon,
-    Slash, Backslash,
-    Single_Quote, Double_Quote,
-    Period,
-    Asterisk,
-    Backtick,
-    Space,
-    Dollar,
-    Exclamation,
-    Hash,
-    Percent,
-    Ampersand,
-    Tick,
-    Underscore,
-    Caret,
-    Comma,
-    Pipe,
-    At,
-    Tilde,
-    Less_Than, Greater_Than,
-    Question_Mark,
 }
 
 Mod :: enum {
@@ -73,7 +41,7 @@ Mod :: enum {
 
 Keyboard_Input :: struct {
     mod: Mod,
-    key: Key,
+    key: union { rune, Special_Key },
 }
 
 Mouse_Event :: enum {
@@ -146,244 +114,91 @@ read_raw_blocking :: proc(buf: []u8) -> (input: string, ok: bool) {
 
 
 
-
-// Note: The terminal processes some inputs making them be treated the same,
-//       so if you're checking for a certain input and always .None,
-//       check what value it is processed into.
-//       For example, `.Escape` is either Esc, Ctrl + [ and Ctrl + 3 to the terminal.
-// TODO: Make some test to determine which inputs are processed
-//       to implement parsing mechanism for them to make the API more consistent.
-// Parses the raw bytes sent by the terminal in `Input`.
-parse_keyboard_input :: proc( input: string ) -> ( keyboard_input: Keyboard_Input, ok: bool) {
-    _alnum_to_key :: proc(r: rune) -> (key: Key, ok: bool) {
-        switch r {
-        case '\x1b': key = .Escape
-        case '\r', '\n': key = .Enter
-        case '\t': key = .Tab
-        case 8, 127: key = .Backspace
-        case '1': key = .Num_1
-        case '2': key = .Num_2
-        case '3': key = .Num_3
-        case '4': key = .Num_4
-        case '5': key = .Num_5
-        case '6': key = .Num_6
-        case '7': key = .Num_7
-        case '8': key = .Num_8
-        case '9': key = .Num_9
-        case '0': key = .Num_0
-        case 'a', 'A': key = .A
-        case 'b', 'B': key = .B
-        case 'c', 'C': key = .C
-        case 'd', 'D': key = .D
-        case 'e', 'E': key = .E
-        case 'f', 'F': key = .F
-        case 'g', 'G': key = .G
-        case 'h', 'H': key = .H
-        case 'i', 'I': key = .I
-        case 'j', 'J': key = .J
-        case 'k', 'K': key = .K
-        case 'l', 'L': key = .L
-        case 'm', 'M': key = .M
-        case 'n', 'N': key = .N
-        case 'o', 'O': key = .O
-        case 'p', 'P': key = .P
-        case 'q', 'Q': key = .Q
-        case 'r', 'R': key = .R
-        case 's', 'S': key = .S
-        case 't', 'T': key = .T
-        case 'u', 'U': key = .U
-        case 'v', 'V': key = .V
-        case 'w', 'W': key = .W
-        case 'x', 'X': key = .X
-        case 'y', 'Y': key = .Y
-        case 'z', 'Z': key = .Z
-        case ',': key = .Comma
-        case ':': key = .Colon
-        case ';': key = .Semicolon
-        case '-': key = .Minus
-        case '+': key = .Plus
-        case '=': key = .Equal
-        case '{': key = .Open_Curly_Bracket
-        case '}': key = .Close_Curly_Bracket
-        case '(': key = .Open_Paren
-        case ')': key = .Close_Paren
-        case '[': key = .Open_Square_Bracket
-        case ']': key = .Close_Square_Bracket
-        case '/': key = .Slash
-        case '\'': key = .Single_Quote
-        case '"': key = .Double_Quote
-        case '.': key = .Period
-        case '*': key = .Asterisk
-        case '`': key = .Backtick
-        case '\\': key = .Backslash
-        case ' ': key = .Space
-        case '$': key = .Dollar
-        case '!': key = .Exclamation
-        case '#': key = .Hash
-        case '%': key = .Percent
-        case '&': key = .Ampersand
-        case '´': key = .Tick
-        case '_': key = .Underscore
-        case '^': key = .Caret
-        case '|': key = .Pipe
-        case '@': key = .At
-        case '~': key = .Tilde
-        case '<': key = .Less_Than
-        case '>': key = .Greater_Than
-        case '?': key = .Question_Mark
-        case: ok = false; return
-        }
-
-        ok = true; return
+// https://sw.kovidgoyal.net/kitty/keyboard-protocol/#legacy-key-event-encoding
+// TODO: Implement Kitty input protocol,
+//       The struct fields probably will be adapted
+parse_keyboard_input :: proc(inpt: string) -> (keyboard_input: Keyboard_Input, ok: bool) {
+    take_rune :: proc(s: ^string) -> rune {
+        r, l := utf8.decode_rune_in_string(s^)
+        s^ = s^[l:]
+        return r
     }
 
-    input := input
-    seq: Keyboard_Input
+    inpt := inpt
+    if len(inpt) == 0 { return {}, false }
+    fst_r := take_rune(&inpt)
 
-    if len(input) == 0 do return
+    // Non contrlol
+    if !utf8.is_control(fst_r) {
+        if unic.is_upper(fst_r) { return {.Shift, fst_r}, true }
+        else                    { return {.None,  fst_r}, true }
+    } else
 
-    if len(input) == 1 {
-        input_rune := cast(rune)input[0]
-        if unicode.is_upper(input_rune) {
-            seq.mod = .Shift
-        }
+    // Control character
+    {
+        switch fst_r {
+        case '\u0000': return {.Ctrl,  ' '}, true
+        case '\u000d': return {.None, .Enter}, true
+        case '\u007f': return {.None, .Backspace}, true
+        case '\u0008': return {.Ctrl, .Backspace}, true
+        case '\u0009': return {.None, .Tab}, true
+        case '\u001b':
+            snd_r := take_rune(&inpt)
+            switch snd_r {
+            case '\u0000': return {.Ctrl + .Alt,  ' '}, true
+            case '\u000d': return {.Alt,         .Enter}, true
+            case '\u007f': return {.Alt,         .Backspace}, true
+            case '\u0008': return {.Ctrl + .Alt, .Backspace}, true
+            case '\u0009': return {.Alt,         .Tab}, true
+            case '\u001b': return {.Alt,         .Escape}, true
+            }
 
-        if unicode.is_control(input_rune) {
-        switch input_rune {
-        case:
-            seq.mod = .Ctrl
-            input_rune += 64
-        case '\b', '\n':
-            seq.mod = .Ctrl
-        case '\r', '\t', '\x1b', 127: /* backspace */
-        }
-    }
+            // Non CSI
+            if snd_r != '[' {
+                if snd_r == 'O' {
+                    switch inpt {
+                    case "P": return {.None, .F1}, true
+                    case "Q": return {.None, .F2}, true
+                    case "R": return {.None, .F3}, true
+                    case "S": return {.None, .F4}, true
+                    }
+                }
 
-    key, ok := _alnum_to_key(input_rune)
-    if !ok do return {}, false
-    seq.key = key
-    return seq, true
-    }
+                if unic.is_upper(snd_r) { return {.Ctrl + .Shift, snd_r}, true }
+                else                    { return {.Ctrl,          snd_r}, true }
+            } else
 
-    if input[0] != '\x1b' do return
-
-    if len(input) > 3 {
-        input_len := len(input)
-
-        if input[input_len - 3] == ';' {
-            switch input[input_len - 2] {
-            case '2': seq.mod = .Shift
-            case '3': seq.mod = .Alt
-            case '5': seq.mod = .Ctrl
+            // CSI
+            {
+                switch inpt {
+                case "2~":  return {.None, .Insert}, true
+                case "3~":  return {.None, .Delete}, true
+                case "5~":  return {.None, .Page_Up}, true
+                case "6~":  return {.None, .Page_Down}, true
+                case "A":   return {.None, .Arrow_Up}, true
+                case "B":   return {.None, .Arrow_Down}, true
+                case "C":   return {.None, .Arrow_Right}, true
+                case "D":   return {.None, .Arrow_Left}, true
+                case "H":   return {.None, .Home}, true
+                case "F":   return {.None, .End}, true
+                case "15~": return {.None, .F5}, true
+                case "17~": return {.None, .F6}, true
+                case "18~": return {.None, .F7}, true
+                case "19~": return {.None, .F8}, true
+                case "20~": return {.None, .F9}, true
+                case "21~": return {.None, .F10}, true
+                case "23~": return {.None, .F11}, true
+                case "24~": return {.None, .F12}, true
+                case "29~": return {.None, .Menu}, true
+                }
             }
         }
     }
 
-    if len(input) >= 2 {
-        switch input[len(input) - 1] {
-        case 'P': seq.key = .F1
-        case 'Q': seq.key = .F2
-        case 'R': seq.key = .F3
-        case 'S': seq.key = .F4
-        }
-
-        if input[1] == 'O' do return seq, true
-    }
-
-    if input[1] == '[' {
-        input = input[2:]
-
-    if len(input) > 2 && input[0] == '1' && input[1] == ';' {
-         switch input[2] {
-         case '2': seq.mod = .Shift
-         case '3': seq.mod = .Alt
-         case '5': seq.mod = .Ctrl
-        }
-
-        input = input[3:]
-    }
-
-
-    if len(input) == 1 {
-        switch input[0] {
-        case 'H': seq.key = .Home
-        case 'F': seq.key = .End
-        case 'A': seq.key = .Arrow_Up
-        case 'B': seq.key = .Arrow_Down
-        case 'C': seq.key = .Arrow_Right
-        case 'D': seq.key = .Arrow_Left
-        case 'Z': seq.key = .Tab
-                  seq.mod = .Shift
-        }
-    }
-
-
-    if len(input) >= 2 {
-        switch input[0] {
-        case 'O':
-            switch input[1] {
-            case 'H': seq.key = .Home
-            case 'F': seq.key = .End
-            }
-        case '1':
-            switch input[1] {
-            case 'P': seq.key = .F1
-            case 'Q': seq.key = .F2
-            case 'R': seq.key = .F3
-            case 'S': seq.key = .F4
-            }
-        }
-    }
-
-
-    if input[len(input) - 1] == '~' {
-        switch input[0] {
-        case '1', '7': seq.key = .Home
-        case '2':      seq.key = .Insert
-        case '3':      seq.key = .Delete
-        case '4', '8': seq.key = .End
-        case '5':      seq.key = .Page_Up
-        case '6':      seq.key = .Page_Down
-        }
-
-        switch input[0] {
-        case '1':
-            switch input[1] {
-            case '1': seq.key = .F1
-            case '2': seq.key = .F2
-            case '3': seq.key = .F3
-            case '4': seq.key = .F4
-            case '5': seq.key = .F5
-            case '7': seq.key = .F6
-            case '8': seq.key = .F7
-            case '9': seq.key = .F8
-            }
-        case '2':
-            switch input[1] {
-            case '0': seq.key = .F9
-            case '1': seq.key = .F10
-            case '3': seq.key = .F11
-            case '4': seq.key = .F12
-            }
-        }
-    }
-
-
-    if seq != {} do return seq, true
-    }
-
-    // alt is ESC + <char>
-    if len(input) == 2 {
-        key, ok := _alnum_to_key(cast(rune)input[1])
-        if ok {
-            seq.mod = .Alt
-            seq.key = key
-            return seq, true
-        }
-    }
-
-    return
+    return {}, false
 }
+
+
 
 // Note: mouse input is not always guaranteed. The user might be running the program from
 //       a TTY or the terminal emulator might just not support mouse input.
