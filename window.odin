@@ -55,6 +55,7 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, 
 
         if real_i > w.backing.w * w.backing.h { return }
         if r == '\r' { continue }
+        if r == '\b' { col -= 1 if col > 0 else 0 }
         if r == '\n' { y += 1; col = 0; continue }
         if x + col >= w.w { continue }
 
@@ -75,6 +76,7 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
 
     for r, i in str {
         if r == '\r' { continue }
+        if r == '\b' { col -= 1 if col > 0 else 0 }
         if r == '\n' {
             y += i / w.w + 1
             col = 0
@@ -101,6 +103,7 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
 
     for r in str {
         if r == '\r' { continue }
+        if r == '\b' { col -= 1 if col > 0 else 0 }
         if r == '\n' {
             w.cy += 1
             w.cx = 0
@@ -128,6 +131,7 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
 
     for r, i in str {
         if r == '\r' { continue }
+        if r == '\b' { col -= 1 if col > 0 else 0 }
         if r == '\n' {
             w.cy += i / w.w + 1 // we are on the line that we ended the writing on
             w.cx  = 0
