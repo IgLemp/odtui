@@ -32,16 +32,24 @@ Special_Key :: enum {
     F1, F2, F3, F4, F5, F6, F7, F8, F9, F10, F11, F12,
 }
 
+// This should be bitsetted
 Mod :: enum {
-    None,
-    Alt,
-    Ctrl,
-    Shift,
+    None  = 0,
+    Alt   = 1,
+    Ctrl  = 2,
+    Shift = 4,
+}
+
+Action :: enum {
+    Press,
+    Repeat,
+    Release,
 }
 
 Keyboard_Input :: struct {
     key: union { rune, Special_Key },
-    mod: Mod,
+    mod: Mod, // Change into bitset
+    act: Action,
     raw: rune,
 }
 
@@ -131,66 +139,66 @@ parse_keyboard_input :: proc(inpt: string) -> (keyboard_input: Keyboard_Input, o
 
     // Non contrlol
     if !utf8.is_control(fst_r) {
-        if unic.is_upper(fst_r) { return {unic.to_lower(fst_r), .Shift, fst_r}, true }
-        else                    { return {unic.to_lower(fst_r), .None,  fst_r}, true }
+        if unic.is_upper(fst_r) { return {unic.to_lower(fst_r), .Shift, .Press, fst_r}, true }
+        else                    { return {unic.to_lower(fst_r), .None,  .Press, fst_r}, true }
     } else
 
     // Control character
     {
         switch fst_r {
-        case '\u0000': return { ' ',       .Ctrl, fst_r}, true
-        case '\u000d': return {.Enter,     .None, fst_r}, true
-        case '\u007f': return {.Backspace, .None, fst_r}, true
-        case '\u0008': return {.Backspace, .Ctrl, fst_r}, true
-        case '\u0009': return {.Tab,       .None, fst_r}, true
+        case '\u0000': return { ' ',       .Ctrl, .Press, fst_r}, true
+        case '\u000d': return {.Enter,     .None, .Press, fst_r}, true
+        case '\u007f': return {.Backspace, .None, .Press, fst_r}, true
+        case '\u0008': return {.Backspace, .Ctrl, .Press, fst_r}, true
+        case '\u0009': return {.Tab,       .None, .Press, fst_r}, true
         case '\u001b':
             snd_r := take_rune(&inpt)
             switch snd_r {
-            case '\u0000': return { ' ',       .Ctrl + .Alt, snd_r}, true
-            case '\u000d': return {.Enter,     .Alt,         snd_r}, true
-            case '\u007f': return {.Backspace, .Alt,         snd_r}, true
-            case '\u0008': return {.Backspace, .Ctrl + .Alt, snd_r}, true
-            case '\u0009': return {.Tab,       .Alt,         snd_r}, true
-            case '\u001b': return {.Escape,    .Alt,         snd_r}, true
+            case '\u0000': return { ' ',       .Ctrl + .Alt, .Press, snd_r}, true
+            case '\u000d': return {.Enter,     .Alt,         .Press, snd_r}, true
+            case '\u007f': return {.Backspace, .Alt,         .Press, snd_r}, true
+            case '\u0008': return {.Backspace, .Ctrl + .Alt, .Press, snd_r}, true
+            case '\u0009': return {.Tab,       .Alt,         .Press, snd_r}, true
+            case '\u001b': return {.Escape,    .Alt,         .Press, snd_r}, true
             }
 
             // Non CSI
             if snd_r != '[' {
                 if snd_r == 'O' {
                     switch inpt {
-                    case "P": return {.F1, .None, snd_r}, true
-                    case "Q": return {.F2, .None, snd_r}, true
-                    case "R": return {.F3, .None, snd_r}, true
-                    case "S": return {.F4, .None, snd_r}, true
+                    case "P": return {.F1, .None, .Press, snd_r}, true
+                    case "Q": return {.F2, .None, .Press, snd_r}, true
+                    case "R": return {.F3, .None, .Press, snd_r}, true
+                    case "S": return {.F4, .None, .Press, snd_r}, true
                     }
                 }
 
-                if unic.is_upper(snd_r) { return {snd_r, .Ctrl + .Shift, unic.to_lower(snd_r)}, true }
-                else                    { return {snd_r, .Ctrl,          unic.to_lower(snd_r)}, true }
+                if unic.is_upper(snd_r) { return {snd_r, .Alt + .Shift, .Press, unic.to_lower(snd_r)}, true }
+                else                    { return {snd_r, .Alt,          .Press, unic.to_lower(snd_r)}, true }
             } else
 
             // CSI
             {
                 switch inpt {
-                case "2~":  return {.Insert,      .None, '\u0000'}, true
-                case "3~":  return {.Delete,      .None, '\u0000'}, true
-                case "5~":  return {.Page_Up,     .None, '\u0000'}, true
-                case "6~":  return {.Page_Down,   .None, '\u0000'}, true
-                case "A":   return {.Arrow_Up,    .None, '\u0000'}, true
-                case "B":   return {.Arrow_Down,  .None, '\u0000'}, true
-                case "C":   return {.Arrow_Right, .None, '\u0000'}, true
-                case "D":   return {.Arrow_Left,  .None, '\u0000'}, true
-                case "H":   return {.Home,        .None, '\u0000'}, true
-                case "F":   return {.End,         .None, '\u0000'}, true
-                case "15~": return {.F5,          .None, '\u0000'}, true
-                case "17~": return {.F6,          .None, '\u0000'}, true
-                case "18~": return {.F7,          .None, '\u0000'}, true
-                case "19~": return {.F8,          .None, '\u0000'}, true
-                case "20~": return {.F9,          .None, '\u0000'}, true
-                case "21~": return {.F10,         .None, '\u0000'}, true
-                case "23~": return {.F11,         .None, '\u0000'}, true
-                case "24~": return {.F12,         .None, '\u0000'}, true
-                case "29~": return {.Menu,        .None, '\u0000'}, true
+                case "2~":  return {.Insert,      .None, .Press, '\u0000'}, true
+                case "3~":  return {.Delete,      .None, .Press, '\u0000'}, true
+                case "5~":  return {.Page_Up,     .None, .Press, '\u0000'}, true
+                case "6~":  return {.Page_Down,   .None, .Press, '\u0000'}, true
+                case "A":   return {.Arrow_Up,    .None, .Press, '\u0000'}, true
+                case "B":   return {.Arrow_Down,  .None, .Press, '\u0000'}, true
+                case "C":   return {.Arrow_Right, .None, .Press, '\u0000'}, true
+                case "D":   return {.Arrow_Left,  .None, .Press, '\u0000'}, true
+                case "H":   return {.Home,        .None, .Press, '\u0000'}, true
+                case "F":   return {.End,         .None, .Press, '\u0000'}, true
+                case "15~": return {.F5,          .None, .Press, '\u0000'}, true
+                case "17~": return {.F6,          .None, .Press, '\u0000'}, true
+                case "18~": return {.F7,          .None, .Press, '\u0000'}, true
+                case "19~": return {.F8,          .None, .Press, '\u0000'}, true
+                case "20~": return {.F9,          .None, .Press, '\u0000'}, true
+                case "21~": return {.F10,         .None, .Press, '\u0000'}, true
+                case "23~": return {.F11,         .None, .Press, '\u0000'}, true
+                case "24~": return {.F12,         .None, .Press, '\u0000'}, true
+                case "29~": return {.Menu,        .None, .Press, '\u0000'}, true
                 }
             }
         }
