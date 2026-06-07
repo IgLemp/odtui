@@ -64,24 +64,25 @@ Graph :: struct {
 
 
 set_term_mode :: proc(mode: Term_Mode) {
-     change_terminal_mode(mode)
+    change_terminal_mode(mode)
 
-     #partial switch mode {
-     case .Restored:
-          disable_alt_buffer()
-          disable_mouse()
+    #partial switch mode {
+    case .Restored:
+        disable_alt_buffer()
+        disable_mouse()
+        show_cursor()
 
-     case .Raw:
-          enable_alt_buffer()
-          enable_mouse()
-     }
+    case .Raw:
+        enable_alt_buffer()
+        enable_mouse()
+        hide_cursor()
+    }
 
-     hide_cursor()
 
-     // when changing modes some OSes (like windows) might put garbage that we don't care about
-     // in stdin potentially causing nonblocking reads to block on the first read, so to avoid this,
-     // stdin is always flushed when the mode is changed
-     os.flush(os.stdin)
+    // when changing modes some OSes (like windows) might put garbage that we don't care about
+    // in stdin potentially causing nonblocking reads to block on the first read, so to avoid this,
+    // stdin is always flushed when the mode is changed
+    os.flush(os.stdin)
 }
 
 
