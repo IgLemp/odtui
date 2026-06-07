@@ -41,7 +41,7 @@ main :: proc() {
         #partial switch inp in input {
         case Keyboard_Input:
             if inp.key == 'q' && inp.mod == .Alt { break main_loop }
-            if inp.key == 'c' && inp.mod == .Alt { window_fill(&secn_w, {' ', .None, nil, nil}); secn_w.crs = {0, 0} }
+            if inp.key == 'c' && inp.mod == .Alt { window_fill(&secn_w, {' ', .None, nil, nil}); window_set_cursor(&secn_w, 0, 0) }
             if secn_w.cy == secn_w.h { window_fill(&secn_w, {' ', .None, nil, nil}); secn_w.cy = 0 }
             fmt.wprintfln(s_writer, "%v", inp)
             render_diff(&tui_ctx)
