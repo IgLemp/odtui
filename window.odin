@@ -9,7 +9,10 @@ Window :: struct {
     using pos: struct { x, y: int }, // <= backing buffer w, h
     using sz:  struct { w, h: int }, // relative to backing buffer
     backing: ^Buffer `fmt:"-"`,
-    using crs: struct { cx, cy: int }, // internal cursor
+    using crs: struct {
+        cx, cy: int,
+        st: Style,
+    }, // internal cursor
 }
 
 
@@ -28,6 +31,10 @@ window_make :: proc(b: ^Buffer, window: ^Window, w: int = 0, h: int = 0, x: int 
     }
 }
 
+window_set_cursor :: proc(w: ^Window, x, y: int) {
+    w.crs.cx = x
+    w.crs.cy = y
+}
 
 
 // WRITING PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,6 +42,10 @@ window_fill :: proc(w: ^Window, g: Graph) {
     for i in 0..<w.w*w.h {
         w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)] = g
     }
+}
+
+window_clear :: #force_inline proc(w: ^Window) {
+    window_fill(w, {'\u0000', .None, nil, nil})
 }
 
 window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
@@ -170,7 +181,7 @@ window_stream_proc :: proc(stream_data: rawptr, mode: io.Stream_Mode, p: []u8, o
     _ = whence
 
     if mode != .Write { return 0, .Unsupported }
-    window_write_line(win, string(p))
+    window_write_line(win, string(p), win.crs.st)
     return 0, nil
 }
 
@@ -183,12 +194,16 @@ window_stream_proc_wrapping :: proc(stream_data: rawptr, mode: io.Stream_Mode, p
     _ = whence
 
     if mode != .Write { return 0, .Unsupported }
-    window_write_line_wrapping(win, string(p))
+    window_write_line_wrapping(win, string(p), win.crs.st)
     return 0, nil
 }
 
 // Returns an `io.Writer`
 window_to_writer :: proc(w: ^Window, wrapping: bool = false) -> io.Writer {
     return io.Writer { window_stream_proc_wrapping if wrapping else window_stream_proc, w }
+}
+
+writer_change_style :: #force_inline proc(wr: io.Writer, st: Style) {
+    (cast(^Window)wr.data).crs.st = st
 }
 
