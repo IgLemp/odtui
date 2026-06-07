@@ -9,7 +9,7 @@ import str "core:strings"
 
 print_rune :: proc(sb: ^str.Builder, r: rune) {
     // These characters should not be here anyways
-    if (r == '\n') || (r == '\r') { return }
+    if (r == '\n') || (r == '\r') || (r == '\b') || (r == '\v') { return }
     str.write_rune(sb, r)
 }
 
@@ -21,6 +21,7 @@ set_text_style :: proc(sb: ^str.Builder, styles: bit_set[Text_Style]) {
     SGR_INVERTED  :: ansi.CSI + ansi.INVERT    + "m"
     SGR_CROSSED   :: ansi.CSI + ansi.STRIKE    + "m"
 
+    reset_styles(sb)
     if .Bold      in styles do str.write_string(sb, SGR_BOLD)
     if .Dim       in styles do str.write_string(sb, SGR_DIM)
     if .Italic    in styles do str.write_string(sb, SGR_ITALIC)
