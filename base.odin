@@ -12,7 +12,6 @@ import str "core:strings"
 TUI_Context :: struct {
     main_buffer: Buffer,
     prev_buffer: Buffer,
-    diff_buffer: Buffer,
     render_sb: str.Builder
 }
 
@@ -24,7 +23,6 @@ default_context_make :: proc(ctx: ^TUI_Context, w: int = -1, h: int = -1) {
 
     buffer_make(&ctx.main_buffer, term_sz.w, term_sz.h)
     buffer_make(&ctx.prev_buffer, term_sz.w, term_sz.h)
-    buffer_make(&ctx.diff_buffer, term_sz.w, term_sz.h)
 
     render_sb, _ := str.builder_make()
     ctx.render_sb = render_sb
@@ -34,7 +32,6 @@ default_context_make :: proc(ctx: ^TUI_Context, w: int = -1, h: int = -1) {
 default_context_delete :: proc(ctx: ^TUI_Context) {
     buffer_delete(&ctx.main_buffer)
     buffer_delete(&ctx.prev_buffer)
-    buffer_delete(&ctx.diff_buffer)
 
     str.builder_destroy(&ctx.render_sb)
 }
@@ -45,7 +42,7 @@ context_render :: proc(ctx: ^TUI_Context) {
 }
 
 context_render_diff :: proc(ctx: ^TUI_Context) {
-    buffer_render_diff(&ctx.main_buffer, &ctx.prev_buffer, &ctx.diff_buffer, &ctx.render_sb) 
+    buffer_render_diff(&ctx.main_buffer, &ctx.prev_buffer, &ctx.render_sb) 
     buffer_blit(ctx.main_buffer, ctx.prev_buffer)
 }
 

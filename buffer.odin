@@ -6,6 +6,9 @@ import slc "core:slice"
 import ctl "termctl"
 import "core:os"
 
+// CONSIDER: In `render_diff` we're checking if the cells have been changed to avoid repainting everything
+// So, like, why not have a field in the cell that marks if the cell is dirty and just paint based on that?
+
 
 // The most basic primitive that can be displayed.
 // A foundation for other forms of displayable elements.
@@ -71,14 +74,48 @@ buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
 }
 
 // Renders only changed regions.
-// BUG: Still doesnt work and I don't know why.
-buffer_render_diff :: proc(src, dest: ^Buffer, diff: ^Buffer, sb: ^str.Builder) {
-    assert(diff != nil, "The diff buffer is nil!")
+buffer_render_diff :: proc(curr, last: ^Buffer, sb: ^str.Builder){
+    if curr.w == 0 || curr.h == 0 { return }
+    void: bool = false
 
-    buffer_zero(diff)
-    retb := buffer_diff(src, dest, diff)
-    // log.debug(retb)
-    buffer_render(&retb, sb)
+    for g, i in curr.buff[:] {
+        if curr.buff[i] == last.buff[i] { void = true; continue }
+        else { last.buff[i] = curr.buff[i] }
+
+        if curr.x + (i % curr.w) < 0 { continue }
+        if curr.y + (i / curr.w) < 0 { continue }
+
+        // Nothing to print
+        if g.r == rune(0) { void = true; continue }
+
+        // Move cursor to next line
+        if i % curr.w == 0
+            { move_cursor(sb, curr.x + (i % curr.w), curr.y + (i / curr.w)) }
+
+        if void == true && g.r != rune(0)
+            { move_cursor(sb, curr.x + (i % curr.w), curr.y + (i / curr.w)); void = false }
+
+        // First rune
+        if i == 0 {
+            set_text_style(sb, { g.st })
+            set_fg_color_style(sb, g.fg)
+            set_bg_color_style(sb, g.bg)
+            print_rune(sb, g.r);
+            continue
+        }
+
+        if curr.buff[i - 1].st != g.st
+            { set_text_style(sb, { g.st }) }
+        if curr.buff[i - 1].fg != g.fg
+            { set_fg_color_style(sb, g.fg) }
+        if curr.buff[i - 1].bg != g.bg
+            { set_bg_color_style(sb, g.bg) }
+
+        print_rune(sb, g.r)
+    }
+
+    os.write_strings(os.stdout, str.to_string(sb^))
+    str.builder_reset(sb)
 }
 
 // Writes a single graph at x, y.
