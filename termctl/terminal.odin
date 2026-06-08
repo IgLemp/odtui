@@ -96,6 +96,9 @@ move_cursor :: proc(sb: ^strings.Builder, x, y: int) {
     str.write_rune(sb, 'H')
 }
 
+
+// Does window size, so consider that: \x1b[18t
+
 hide_cursor        :: proc() { fmt.print(ansi.CSI + "?25l") }
 show_cursor        :: proc() { fmt.print(ansi.CSI + "?25h") }
 restore_screen     :: proc() { fmt.print(ansi.CSI + "?47l") }

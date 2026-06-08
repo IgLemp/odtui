@@ -77,7 +77,9 @@ buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
 buffer_render_diff :: proc(curr, last: ^Buffer, sb: ^str.Builder){
     if curr.w == 0 || curr.h == 0 { return }
     void: bool = false
+    last_graph: Graph
 
+    reset_styles(sb)
     for g, i in curr.buff[:] {
         if curr.buff[i] == last.buff[i] { void = true; continue }
         else { last.buff[i] = curr.buff[i] }
@@ -104,12 +106,14 @@ buffer_render_diff :: proc(curr, last: ^Buffer, sb: ^str.Builder){
             continue
         }
 
-        if curr.buff[i - 1].st != g.st
+        if last_graph.st != g.st
             { set_text_style(sb, { g.st }) }
-        if curr.buff[i - 1].fg != g.fg
+        if last_graph.fg != g.fg
             { set_fg_color_style(sb, g.fg) }
-        if curr.buff[i - 1].bg != g.bg
+        if last_graph.bg != g.bg
             { set_bg_color_style(sb, g.bg) }
+
+        last_graph = g
 
         print_rune(sb, g.r)
     }
