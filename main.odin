@@ -30,9 +30,7 @@ main :: proc() {
     s_writer := window_to_writer(&secn_w, false)
 
     fmt.wprintln(s_writer, "pot")
-    render_diff(&tui_ctx)
     fmt.wprintln(m_writer, "prt")
-    render_diff(&tui_ctx)
 
     inp_buff: [1024]u8
     main_loop: for {
@@ -44,11 +42,12 @@ main :: proc() {
             if inp.key == 'c' && inp.mod == .Alt { window_fill(&secn_w, {' ', .None, nil, nil}); window_set_cursor(&secn_w, 0, 0) }
             if secn_w.cy == secn_w.h { window_fill(&secn_w, {' ', .None, nil, nil}); secn_w.cy = 0 }
             fmt.wprintfln(s_writer, "%v", inp)
-            render_diff(&tui_ctx)
+            fmt.wprintf(m_writer, "%c", inp.raw)
+            render(&tui_ctx)
         case Mouse_Input:
             if main_w.cy == main_w.h { window_fill(&main_w, {' ', .None, nil, nil}); main_w.cy = 0 }
-            fmt.wprintfln(m_writer, "%v", inp.pos)
-            render_diff(&tui_ctx)
+            // fmt.wprintfln(m_writer, "%v", inp.pos)
+            render(&tui_ctx)
         }
     }
 

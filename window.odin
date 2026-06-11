@@ -40,7 +40,7 @@ window_set_cursor :: proc(w: ^Window, x, y: int) {
 // WRITING PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////////
 window_fill :: proc(w: ^Window, g: Graph) {
     for i in 0..<w.w*w.h {
-        w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)] = g
+        w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)] = {g, false}
     }
 }
 
@@ -52,7 +52,7 @@ window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
     if x > w.backing.w ||
        y > w.backing.w { return }
 
-    w.backing.buff[lin_to_buff(0, w.x + x, w.y + y, w.w, w.backing.w)] = g
+    w.backing.buff[lin_to_buff(0, w.x + x, w.y + y, w.w, w.backing.w)] = {g, false}
 }
 
 // Cursor independent //----------------------------------------------------------------------------------------------//
@@ -69,10 +69,7 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, 
         if r == '\n' { y += 1; col = 0; continue }
         if x + col >= w.w { continue }
 
-        w.backing.buff[real_i].st = st.st
-        w.backing.buff[real_i].fg = st.fg
-        w.backing.buff[real_i].bg = st.bg
-        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
 
         col += 1
     }
@@ -96,10 +93,7 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
         real_i := lin_to_buff(col, w.x + x, w.y + y, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w*w.h, w.x, w.y, w.w, w.backing.w) { return }
 
-        w.backing.buff[real_i].st = st.st
-        w.backing.buff[real_i].fg = st.fg
-        w.backing.buff[real_i].bg = st.bg
-        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
 
         col += 1
     }
@@ -123,10 +117,7 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
         if w.cy > w.h - 1 { break }
 
         real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
-        w.backing.buff[real_i].st = st.st
-        w.backing.buff[real_i].fg = st.fg
-        w.backing.buff[real_i].bg = st.bg
-        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
 
         col += 1
     }
@@ -149,10 +140,7 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
         real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w * w.h - 1, w.x, w.y, w.w, w.backing.w) { break }
 
-        w.backing.buff[real_i].st = st.st
-        w.backing.buff[real_i].fg = st.fg
-        w.backing.buff[real_i].bg = st.bg
-        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
 
         col += 1
     }

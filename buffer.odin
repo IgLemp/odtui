@@ -6,16 +6,18 @@ import slc "core:slice"
 import ctl "termctl"
 import "core:os"
 
-// CONSIDER: In `render_diff` we're checking if the cells have been changed to avoid repainting everything
-// So, like, why not have a field in the cell that marks if the cell is dirty and just paint based on that?
 
+Cell :: struct {
+    using gr: Graph,
+    clean: bool
+}
 
 // The most basic primitive that can be displayed.
 // A foundation for other forms of displayable elements.
 Buffer :: struct {
     using pos: struct { x, y: int },
     using sz:  struct { w, h: int },
-    buff: []Graph `fmt:"-"`,
+    buff: []Cell `fmt:"-"`,
 }
 
 
@@ -23,7 +25,7 @@ Buffer :: struct {
 
 // Fills the buffer with a desired graph.
 buffer_fill :: #force_inline proc(buffer: ^Buffer, g: Graph) {
-    slc.fill(buffer.buff, g)
+    slc.fill(buffer.buff, Cell{g, false})
 }
 
 // Zeroes the buffer.
@@ -34,87 +36,33 @@ buffer_zero :: #force_inline proc(buffer: ^Buffer) {
 // Renders everything to screen.
 buffer_render :: proc(buffer: ^Buffer, sb: ^str.Builder) {
     if buffer.w == 0 || buffer.h == 0 { return }
-    void: bool = false
+    last: Graph = buffer.buff[0].gr
+    void: bool = true
 
     for g, i in buffer.buff[:] {
         if buffer.x + (i % buffer.w) < 0 { continue }
         if buffer.y + (i / buffer.w) < 0 { continue }
 
         // Nothing to print. Behaviour also needed for render_diff
-        if g.r == rune(0) { void = true; continue }
+        if g.r == rune(0) || g.clean == true
+            { void = true; continue }
 
         // Move cursor to next line
         if i % buffer.w == 0
             { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)) }
 
-        if void == true && g.r != rune(0)
+        if g.r != rune(0) && void == true && g.clean == false
             { move_cursor(sb, buffer.x + (i % buffer.w), buffer.y + (i / buffer.w)); void = false }
 
-        // First rune
-        if i == 0 {
-            set_text_style(sb, { g.st })
-            set_fg_color_style(sb, g.fg)
-            set_bg_color_style(sb, g.bg)
-            print_rune(sb, g.r);
-            continue
-        }
-
-        if buffer.buff[i - 1].st != g.st
+        if last.st != g.st
             { set_text_style(sb, { g.st }) }
-        if buffer.buff[i - 1].fg != g.fg
+        if last.fg != g.fg
             { set_fg_color_style(sb, g.fg) }
-        if buffer.buff[i - 1].bg != g.bg
+        if last.bg != g.bg
             { set_bg_color_style(sb, g.bg) }
 
-        print_rune(sb, g.r)
-    }
-
-    os.write_strings(os.stdout, str.to_string(sb^))
-    str.builder_reset(sb)
-}
-
-// Renders only changed regions.
-buffer_render_diff :: proc(curr, last: ^Buffer, sb: ^str.Builder){
-    if curr.w == 0 || curr.h == 0 { return }
-    void: bool = false
-    last_graph: Graph
-
-    reset_styles(sb)
-    for g, i in curr.buff[:] {
-        if curr.buff[i] == last.buff[i] { void = true; continue }
-        else { last.buff[i] = curr.buff[i] }
-
-        if curr.x + (i % curr.w) < 0 { continue }
-        if curr.y + (i / curr.w) < 0 { continue }
-
-        // Nothing to print
-        if g.r == rune(0) { void = true; continue }
-
-        // Move cursor to next line
-        if i % curr.w == 0
-            { move_cursor(sb, curr.x + (i % curr.w), curr.y + (i / curr.w)) }
-
-        if void == true && g.r != rune(0)
-            { move_cursor(sb, curr.x + (i % curr.w), curr.y + (i / curr.w)); void = false }
-
-        // First rune
-        if i == 0 {
-            set_text_style(sb, { g.st })
-            set_fg_color_style(sb, g.fg)
-            set_bg_color_style(sb, g.bg)
-            print_rune(sb, g.r);
-            continue
-        }
-
-        if last_graph.st != g.st
-            { set_text_style(sb, { g.st }) }
-        if last_graph.fg != g.fg
-            { set_fg_color_style(sb, g.fg) }
-        if last_graph.bg != g.bg
-            { set_bg_color_style(sb, g.bg) }
-
-        last_graph = g
-
+        last = g
+        buffer.buff[i].clean = true
         print_rune(sb, g.r)
     }
 
@@ -127,7 +75,7 @@ buffer_write_graph :: proc(b: ^Buffer, g: Graph, x, y: int) {
     if x > b.w ||
        y > b.w { return }
 
-    b.buff[lin_to_buff(0, x, y, b.w, b.w)] = g
+    b.buff[lin_to_buff(0, x, y, b.w, b.w)] = {g, false}
 }
 
 // Writes text to a buffer cutting the overflowing part that didn't fit.
@@ -141,7 +89,7 @@ buffer_write_line :: proc(b: ^Buffer, str: string, st: Text_Style, fg, bg: Any_C
         if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
         if r == '\n' { y += 1; i_offs = i + 1; continue }
         if x + i - i_offs >= b.w { continue }
-        b.buff[lin_to_buff(i - i_offs, x, y, b.w, b.w)] = {r, st, fg, bg}
+        b.buff[lin_to_buff(i - i_offs, x, y, b.w, b.w)] = {{r, st, fg, bg}, false}
     }
 }
 
@@ -155,7 +103,7 @@ buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Text_Style, fg, 
     for r, i in str {
         if lin_to_buff(i - i_offs, x, y, b.w, b.w) > b.w * b.h { return }
         if r == '\n' { y += 1; i_offs = i + 1; continue }
-        b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {r, st, fg, bg}
+        b.buff[lin_to_buff(i, x, y, b.w, b.w)] = {{r, st, fg, bg}, false}
     }
 }
 
@@ -164,7 +112,7 @@ buffer_write_line_wrapping :: proc(b: ^Buffer, str: string, st: Text_Style, fg, 
 
 // Initializes a buffer with a backing graph array.
 // Provided with no backing slice it will make its own with default allocator.
-buffer_make :: proc(buffer: ^Buffer, w, h: int, x: int = 0, y: int = 0, backing: []Graph = nil) {
+buffer_make :: proc(buffer: ^Buffer, w, h: int, x: int = 0, y: int = 0, backing: []Cell = nil) {
     buffer.w = w
     buffer.h = h
 
@@ -172,7 +120,7 @@ buffer_make :: proc(buffer: ^Buffer, w, h: int, x: int = 0, y: int = 0, backing:
     buffer.y = y
 
     if backing == nil {
-        new_buff := make([]Graph, w * h)
+        new_buff := make([]Cell, w * h)
         buffer.buff = new_buff
     } else {
         when SAFEGUARDS { assert(cast(int)len(backing) >= w * h, "Buffer not too small!") }
@@ -305,7 +253,7 @@ buffer_blit :: proc(src: Buffer, dest: Buffer) {
 }
 
 // Resizes the buffer. Requires everything to be rerendered after resize.
-buffer_resize :: proc(buffer: ^Buffer, w, h: int, backing: []Graph = nil) {
+buffer_resize :: proc(buffer: ^Buffer, w, h: int, backing: []Cell = nil) {
     buffer_delete(buffer)
     buffer_make(buffer, w, h, buffer.x, buffer.y, backing)
 }

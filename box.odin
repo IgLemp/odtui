@@ -33,26 +33,26 @@ box_write_borders :: proc(w: ^Window, type: sym.Border_Set = sym.BORDER_PLAIN, s
     // set horizontal
     for x in 0..<w.w {
         real_i_top := lin_to_buff(0, w.x + x, w.y - 1, w.w + 2, w.backing.w)
-        w.backing.buff[real_i_top] = { type.horizontal_top, style.st, style.fg, style.bg }
+        w.backing.buff[real_i_top] = {{type.horizontal_top, style.st, style.fg, style.bg}, false}
 
         real_i_bot := lin_to_buff(0, w.x + x, w.y + w.h, w.w + 2, w.backing.w)
-        w.backing.buff[real_i_bot] = { type.horizontal_bottom, style.st, style.fg, style.bg }
+        w.backing.buff[real_i_bot] = {{type.horizontal_bottom, style.st, style.fg, style.bg}, false}
     }
 
     // set vertical
     for y in 0..<w.h {
         real_i_top := lin_to_buff(0, w.x - 1, w.y + y, w.w + 2, w.backing.w)
-        w.backing.buff[real_i_top] = { type.vertical_left, style.st, style.fg, style.bg }
+        w.backing.buff[real_i_top] = {{type.vertical_left, style.st, style.fg, style.bg}, false}
 
         real_i_bot := lin_to_buff(0, w.x + w.w, w.y + y, w.w + 2, w.backing.w)
-        w.backing.buff[real_i_bot] = { type.vertical_right, style.st, style.fg, style.bg }
+        w.backing.buff[real_i_bot] = {{type.vertical_right, style.st, style.fg, style.bg}, false}
     }
 
     // set corners
-    /* left  up  */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y - 1,   w.w + 2, w.backing.w)] = { type.top_left,     style.st, style.fg, style.bg }
-    /* right up  */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y - 1,   w.w + 2, w.backing.w)] = { type.top_right,    style.st, style.fg, style.bg }
-    /* left  bot */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y + w.h, w.w + 2, w.backing.w)] = { type.bottom_left,  style.st, style.fg, style.bg }
-    /* right bot */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y + w.h, w.w + 2, w.backing.w)] = { type.bottom_right, style.st, style.fg, style.bg }
+    /* left  up  */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y - 1,   w.w + 2, w.backing.w)] = {{type.top_left,     style.st, style.fg, style.bg}, false}
+    /* right up  */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y - 1,   w.w + 2, w.backing.w)] = {{type.top_right,    style.st, style.fg, style.bg}, false}
+    /* left  bot */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y + w.h, w.w + 2, w.backing.w)] = {{type.bottom_left,  style.st, style.fg, style.bg}, false}
+    /* right bot */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y + w.h, w.w + 2, w.backing.w)] = {{type.bottom_right, style.st, style.fg, style.bg}, false}
 }
 
 
