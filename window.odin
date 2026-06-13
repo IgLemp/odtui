@@ -45,6 +45,13 @@ window_fill :: proc(w: ^Window, g: Graph) {
 }
 
 window_clear :: #force_inline proc(w: ^Window) {
+    for i in 0..<w.w*w.h {
+        w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)].r = ' '
+        w.backing.buff[lin_to_buff(i, w.x, w.y, w.w, w.backing.w)].clean = false
+    }
+}
+
+window_reset :: #force_inline proc(w: ^Window) {
     window_fill(w, {'\u0000', .None, nil, nil})
 }
 
@@ -58,6 +65,7 @@ window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
 // Cursor independent //----------------------------------------------------------------------------------------------//
 window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
+    if w.w <= 0 || w.h <= 0 { return }
     y := y
     col := 0
 
@@ -69,7 +77,11 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, 
         if r == '\n' { y += 1; col = 0; continue }
         if x + col >= w.w { continue }
 
-        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
+        w.backing.buff[real_i].clean = false
+        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i].st = st.st
+        if st.fg != nil do w.backing.buff[real_i].fg = st.fg
+        if st.bg != nil do w.backing.buff[real_i].bg = st.bg
 
         col += 1
     }
@@ -78,6 +90,7 @@ window_write_line_pos :: proc(w: ^Window, str: string, st: Style = {.None, nil, 
 // TODO: This has inconsistent behaviour with the function above
 window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}, x: int = 0, y: int = 0) {
     if x >= w.w || y >= w.h { return }
+    if w.w <= 0 || w.h <= 0 { return }
     x, y := x, y
     col := 0
 
@@ -93,7 +106,11 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
         real_i := lin_to_buff(col, w.x + x, w.y + y, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w*w.h, w.x, w.y, w.w, w.backing.w) { return }
 
-        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
+        w.backing.buff[real_i].clean = false
+        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i].st = st.st
+        if st.fg != nil do w.backing.buff[real_i].fg = st.fg
+        if st.bg != nil do w.backing.buff[real_i].bg = st.bg
 
         col += 1
     }
@@ -102,6 +119,7 @@ window_write_line_pos_wrapping :: proc(w: ^Window, str: string, st: Style = {.No
 
 // Cursor dependent ------------------------------------------------------------------------------------------------- //
 window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}) {
+    if w.w <= 0 || w.h <= 0 { return }
     col := 0
 
     for r in str {
@@ -117,7 +135,12 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
         if w.cy > w.h - 1 { break }
 
         real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
-        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
+
+        w.backing.buff[real_i].clean = false
+        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i].st = st.st
+        if st.fg != nil do w.backing.buff[real_i].fg = st.fg
+        if st.bg != nil do w.backing.buff[real_i].bg = st.bg
 
         col += 1
     }
@@ -126,6 +149,7 @@ window_write_line :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}
 }
 
 window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, nil, nil}) {
+    if w.w <= 0 || w.h <= 0 { return }
     col := 0
 
     for r, i in str {
@@ -140,7 +164,11 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
         real_i := lin_to_buff(col + w.cx, w.x, w.y + w.cy, w.w, w.backing.w)
         if real_i > lin_to_buff(w.w * w.h - 1, w.x, w.y, w.w, w.backing.w) { break }
 
-        w.backing.buff[real_i] = {{r, st.st, st.fg, st.bg}, false}
+        w.backing.buff[real_i].clean = false
+        w.backing.buff[real_i].r = r
+        w.backing.buff[real_i].st = st.st
+        if st.fg != nil do w.backing.buff[real_i].fg = st.fg
+        if st.bg != nil do w.backing.buff[real_i].bg = st.bg
 
         col += 1
     }
@@ -187,7 +215,12 @@ window_to_writer :: proc(w: ^Window, wrapping: bool = false) -> io.Writer {
     return io.Writer { window_stream_proc_wrapping if wrapping else window_stream_proc, w }
 }
 
-writer_change_style :: #force_inline proc(wr: io.Writer, st: Style) {
+writer_set_style :: #force_inline proc(wr: io.Writer, st: Style = {.None, nil, nil}) {
     (cast(^Window)wr.data).crs.st = st
+}
+
+writer_set_position :: #force_inline proc(wr: io.Writer, x: int = 0, y: int = 0) {
+    (cast(^Window)wr.data).crs.cx = 0
+    (cast(^Window)wr.data).crs.cy = 0
 }
 

@@ -60,6 +60,16 @@ align_bottom_elem :: proc(win: rawptr, elem: rawptr) {
     e_rect.y = (w_rect.y + w_rect.h) - e_rect.h
 }
 
+// Padding ---------------------------------------------------------------------------------------------------------- //
+pad_elem :: proc(elem: rawptr, padding: Padding) {
+    rect := cast(^Rect)elem
+
+    rect.x += padding[.Left]
+    rect.y += padding[.Up]
+    rect.w -= padding[.Left] + padding[.Right]
+    rect.h -= padding[.Up] + padding[.Down]
+}
+
 
 // Splits ----------------------------------------------------------------------------------------------------------- //
 // NOTICE: Everything is calculated relative to `win` position (which is relative),
