@@ -161,47 +161,42 @@ split_vertical_padded :: proc(win: rawptr, padding: Padding, elems: ..rawptr) {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// CHECK CODE BELOW !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-/// I'm lazy and this was written by a clanker !!!
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Stacks ----------------------------------------------------------------------------------------------------------- //
+// Elements share their adjacent border so it isn't doubled.
+// `border` is the thickness of the shared edge (usually 1).
+stack_horizontal :: proc(win: rawptr, border: int, elems: ..rawptr) {
+    rect := cast(^Rect)win
 
-// // Stacks ----------------------------------------------------------------------------------------------------------- //
-// // Elements share their adjacent border so it isn't doubled.
-// // `border` is the thickness of the shared edge (usually 1).
-// stack_horizontal :: proc(win: rawptr, border: int, elems: ..rawptr) {
-//     rect := cast(^Rect)win
+    n := len(elems)
+    w := (rect.w + (n - 1) * border) / n
 
-//     n := len(elems)
-//     w := (rect.w + (n - 1) * border) / n
+    for e, i in elems {
+        r := cast(^Rect)e
 
-//     for e, i in elems {
-//         r := cast(^Rect)win
+        r.x = rect.x + i * (w - border)
+        r.y = rect.y
+        r.w = w
+        r.h = rect.h
+    }
+}
 
-//         r.x = rect.x + i * (w - border)
-//         r.y = rect.y
-//         r.w = w
-//         r.h = rect.h
-//     }
-// }
+stack_vertical :: proc(win: rawptr, border: int, elems: ..rawptr) {
+    rect := cast(^Rect)win
 
-// stack_vertical :: proc(win: rawptr, border: int, elems: ..rawptr) {
-//     rect := cast(^Rect)win
+    n := len(elems)
+    h := (rect.h + (n - 1) * border) / n
 
-//     n := len(elems)
-//     h := (rect.h + (n - 1) * border) / n
+    for e, i in elems {
+        r := cast(^Rect)e
 
-//     for e, i in elems {
-//         r := cast(^Rect)rect
+        r.x = rect.x
+        r.y = rect.y + i * (h - border)
+        r.w = rect.w
+        r.h = h
+    }
+}
 
-//         r.x = rect.x
-//         r.y = rect.y + i * (h - border)
-//         r.w = rect.w
-//         r.h = h
-//     }
-// }
-
-// // Padded ----------------------------------------------------------------------------------------------------------- //
+// Padded ----------------------------------------------------------------------------------------------------------- //
 // stack_horizontal_padded :: proc(win: rawptr, padding: Padding, border: int, elems: ..rawptr) {
 //     rect := cast(^Rect)win
 
@@ -212,7 +207,7 @@ split_vertical_padded :: proc(win: rawptr, padding: Padding, elems: ..rawptr) {
 //     h := rect.h - padding[.Up] - padding[.Down]
 
 //     for e, i in elems {
-//         r := cast(^Rect)rect
+//         r := cast(^Rect)e
 
 //         r.x = rect.x + padding[.Left] + i * (w - border)
 //         r.y = rect.y + padding[.Up]
@@ -230,14 +225,18 @@ split_vertical_padded :: proc(win: rawptr, padding: Padding, elems: ..rawptr) {
 //     w     := rect.w - padding[.Left] - padding[.Right]
 
 //     for e, i in elems {
-//         r := cast(^Rect)rect
+//         r := cast(^Rect)e
 
 //         r.x = rect.x + padding[.Left]
 //         r.y = rect.y + padding[.Up] + i * (h - border)
-//         r.w = w
 //         r.h = h
 //     }
 // }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/// CHECK CODE BELOW !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+/// I'm lazy and this was written by a clanker !!!
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // // Flex grid -------------------------------------------------------------------------------------------------------- //
 // // Pass 0 for an element's size to make it greedy (fills remaining space equally)
