@@ -34,44 +34,52 @@ box_write_borders :: proc(w: ^Window, type: sym.Border_Set = sym.BORDER_PLAIN, s
     for x in 0..<w.w {
         real_i_top := lin_to_buff(0, w.x + x, w.y - 1, w.w + 2, w.backing.w)
         if w.y > 0 && w.y <= w.backing.h {
-            w.backing.buff[real_i_top] = {{type.horizontal_top, style.st, style.fg, style.bg}, false}
+            b := sym.combine_lines(w.backing.buff[real_i_top].r, type.horizontal_top)
+            w.backing.buff[real_i_top] = {{b, style.st, style.fg, style.bg}, false}
         }
 
         real_i_bot := lin_to_buff(0, w.x + x, w.y + w.h, w.w + 2, w.backing.w)
-        if w.y + w.h > 0 && w.y + w.h <= w.backing.h {
-            w.backing.buff[real_i_bot] = {{type.horizontal_bottom, style.st, style.fg, style.bg}, false}
+        if w.y + w.h > 0 && w.y + w.h < w.backing.h {
+            b := sym.combine_lines(w.backing.buff[real_i_bot].r, type.horizontal_bottom)
+            w.backing.buff[real_i_bot] = {{b, style.st, style.fg, style.bg}, false}
         }
     }
 
     // set vertical
     for y in 0..<w.h {
         real_i_left := lin_to_buff(0, w.x - 1, w.y + y, w.w + 2, w.backing.w)
-        if w.x > 0 && w.x <= w.backing.w {
-            w.backing.buff[real_i_left] = {{type.vertical_left, style.st, style.fg, style.bg}, false}
+        if w.x > 0 && w.x < w.backing.w {
+            b := sym.combine_lines(w.backing.buff[real_i_left].r, type.vertical_left)
+            w.backing.buff[real_i_left] = {{b, style.st, style.fg, style.bg}, false}
         }
 
         real_i_right := lin_to_buff(0, w.x + w.w, w.y + y, w.w + 2, w.backing.w)
-        if w.x + w.w > 0 && w.x + w.w <= w.backing.w {
-            w.backing.buff[real_i_right] = {{type.vertical_right, style.st, style.fg, style.bg}, false}
+        if w.x + w.w > 0 && w.x + w.w < w.backing.w {
+            b := sym.combine_lines(w.backing.buff[real_i_right].r, type.vertical_right)
+            w.backing.buff[real_i_right] = {{b, style.st, style.fg, style.bg}, false}
         }
     }
 
     // set corners
     if w.y > 0 && w.y <= w.backing.h {
-        if w.x > 0 && w.x <= w.backing.w {
-            /* left  up  */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y - 1,   w.w + 2, w.backing.w)] = {{type.top_left,     style.st, style.fg, style.bg}, false}
+        if w.x > 0 && w.x < w.backing.w {
+            b := sym.combine_lines(w.backing.buff[lin_to_buff(0, w.x - 1, w.y - 1, w.w + 2, w.backing.w)].r, type.top_left)
+            /* left  up  */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y - 1,   w.w + 2, w.backing.w)] = {{b,  style.st, style.fg, style.bg}, false}
         }
-        if w.x + w.w > 0 && w.x + w.w <= w.backing.w {
-            /* right up  */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y - 1,   w.w + 2, w.backing.w)] = {{type.top_right,    style.st, style.fg, style.bg}, false}
+        if w.x + w.w > 0 && w.x + w.w < w.backing.w {
+            b := sym.combine_lines(w.backing.buff[lin_to_buff(0, w.x + w.w, w.y - 1, w.w + 2, w.backing.w)].r, type.top_right)
+            /* right up  */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y - 1,   w.w + 2, w.backing.w)] = {{b, style.st, style.fg, style.bg}, false}
         }
     }
 
-    if w.y + w.h > 0 && w.y + w.h <= w.backing.h {
+    if w.y + w.h > 0 && w.y + w.h < w.backing.h {
         if w.x > 0 && w.x <= w.backing.w {
-            /* left  bot */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y + w.h, w.w + 2, w.backing.w)] = {{type.bottom_left,  style.st, style.fg, style.bg}, false}
+            b := sym.combine_lines(w.backing.buff[lin_to_buff(0, w.x - 1,   w.y + w.h, w.w + 2, w.backing.w)].r, type.bottom_left)
+            /* left  bot */ w.backing.buff[lin_to_buff(0, w.x - 1,   w.y + w.h, w.w + 2, w.backing.w)] = {{b,  style.st, style.fg, style.bg}, false}
         }
-        if w.x + w.w > 0 && w.x + w.w <= w.backing.w {
-            /* right bot */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y + w.h, w.w + 2, w.backing.w)] = {{type.bottom_right, style.st, style.fg, style.bg}, false}
+        if w.x + w.w > 0 && w.x + w.w < w.backing.w {
+            b := sym.combine_lines(w.backing.buff[lin_to_buff(0, w.x + w.w, w.y + w.h, w.w + 2, w.backing.w)].r, type.bottom_right)
+            /* right bot */ w.backing.buff[lin_to_buff(0, w.x + w.w, w.y + w.h, w.w + 2, w.backing.w)] = {{b, style.st, style.fg, style.bg}, false}
         }
     }
 }
