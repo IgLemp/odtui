@@ -57,7 +57,8 @@ window_reset :: #force_inline proc(w: ^Window) {
 
 window_write_graph :: proc(w: ^Window, g: Graph, x, y: int) {
     if x > w.backing.w ||
-       y > w.backing.w { return }
+       y > w.backing.w ||
+       x < 0 || y < 0 { return }
 
     w.backing.buff[lin_to_buff(0, w.x + x, w.y + y, w.w, w.backing.w)] = {g, false}
 }

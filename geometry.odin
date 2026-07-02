@@ -7,6 +7,8 @@ Direction :: enum {
     Left, Right,
 }
 
+Alignment :: bit_set[Direction]
+
 Padding :: [Direction]int
 PADDING_ZERO :: Padding {.Left = 0, .Right = 0, .Down = 0, .Up = 0}
 PADDING_ONE  :: Padding {.Left = 1, .Right = 1, .Down = 1, .Up = 1}
@@ -28,12 +30,14 @@ center_vertical :: proc(win: rawptr, elem: rawptr) {
 }
 
 
-align_elem :: proc(win: rawptr, align: Direction, elem: rawptr) {
+align_elem :: proc(win: rawptr, align: Alignment, elem: rawptr) {
     switch align {
-    case .Up:    align_top_elem   (win, elem)
-    case .Down:  align_bottom_elem(win, elem)
-    case .Left:  align_left_elem  (win, elem)
-    case .Right: align_right_elem (win, elem)
+    case {.Up, .Down}:    center_vertical(win, elem)
+    case {.Left, .Right}: center_horizontal(win, elem)
+    case {.Up}:    align_top_elem   (win, elem)
+    case {.Down}:  align_bottom_elem(win, elem)
+    case {.Left}:  align_left_elem  (win, elem)
+    case {.Right}: align_right_elem (win, elem)
     }
 }
 

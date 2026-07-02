@@ -24,11 +24,13 @@ box_make :: proc(b: ^Buffer, win: ^Window, w: int = 0, h: int = 0, x: int = 0, y
 
 // WRITING PROCEDURES //////////////////////////////////////////////////////////////////////////////////////////////////
 
+// BOX -----------------------------------------------------------------------------------------------------------------
 box_write_borders :: proc(w: ^Window, type: sym.Border_Set = sym.BORDER_PLAIN, style: Style = {.None, nil, nil}) {
     when SAFEGUARDS {
         assert(lin_to_buff(0, -1, -1, w.w + 2, w.backing.w) >= 0, "Box bounderies are outside the buffer!")
         // assert(lin_to_buff(0, w.w - 1, w.w - 1, w.w + 2, w.backing.w) <= 0, "Box bounderies are outside the buffer!")
     }
+    // TODO: set start and end positions in some variables here and do no bound checks after that
 
     // set horizontal
     for x in 0..<w.w {
@@ -83,6 +85,38 @@ box_write_borders :: proc(w: ^Window, type: sym.Border_Set = sym.BORDER_PLAIN, s
         }
     }
 }
+
+box_write_title :: proc(w: ^Window, title: string, st: Style = {.None, nil, nil}) {
+    window_write_line_pos(w, title, st, 0, -1)
+}
+
+
+// BAR -----------------------------------------------------------------------------------------------------------------
+bar_write_title :: proc(
+    w: ^Window, title: string,
+    align: Alignment = {.Left},
+    st: Style = {.None, nil, nil},
+    filler: Graph = {' ', .None, nil, nil})
+{
+    x_0 := 0
+    if      align & {.Left} != nil &&
+            align & {.Right} != nil { x_0 = (w.w - len(title)) / 2 }
+    else if align & {.Left} != nil  { x_0 = 0 }
+    else if align & {.Right} != nil { x_0 = w.w - len(title) }
+
+    y_0 := 0
+    if      align & {.Up} != nil &&
+            align & {.Down} != nil { y_0 = w.h / 2 }
+    else if align & {.Up} != nil   { y_0 = 0 }
+    else if align & {.Down} != nil { y_0 = w.h - 1 }
+
+    for i := 0; i < x_0; i += 1
+        { window_write_graph(w, filler, i, y_0) }
+    for i := x_0 + len(title); i < w.w; i += 1
+        { window_write_graph(w, filler, i, y_0) }
+    window_write_line_pos(w, title, st, x_0, y_0)
+}
+
 
 
 // OPERATIONS //////////////////////////////////////////////////////////////////////////////////////////////////////////
