@@ -4,6 +4,9 @@ import "core:log"
 import "core:io"
 
 
+// TODO: Fix the case of different width characters in UTF-8.
+//       Currently we assume everything has a width of 1 character.
+
 
 Window :: struct {
     using pos: struct { x, y: int }, // <= backing buffer w, h
@@ -180,10 +183,6 @@ window_write_line_wrapping :: proc(w: ^Window, str: string, st: Style = {.None, 
 
 
 // ADAPTERS ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TODO: Make it work with UTF-8
-// Currently works for ASCII, next implementation wold need to check if we're in the center of UTF-8 codepoint
-// to correctly move the cursor. NOTICE: We can do that by checking the first 2 bits, refer to the page below:
-// https://en.wikipedia.org/wiki/UTF-8#Description
 
 // Non wrapping window stream proc
 window_stream_proc :: proc(stream_data: rawptr, mode: io.Stream_Mode, p: []u8, offset: i64, whence: io.Seek_From) -> (n: i64, err: io.Error) {
@@ -221,7 +220,7 @@ writer_set_style :: #force_inline proc(wr: io.Writer, st: Style = {.None, nil, n
 }
 
 writer_set_position :: #force_inline proc(wr: io.Writer, x: int = 0, y: int = 0) {
-    (cast(^Window)wr.data).crs.cx = 0
-    (cast(^Window)wr.data).crs.cy = 0
+    (cast(^Window)wr.data).crs.cx = x
+    (cast(^Window)wr.data).crs.cy = y
 }
 
