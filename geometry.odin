@@ -34,30 +34,30 @@ align_elem :: proc(win: rawptr, align: Alignment, elem: rawptr) {
     switch align {
     case {.Up, .Down}:    center_vertical(win, elem)
     case {.Left, .Right}: center_horizontal(win, elem)
-    case {.Up}:    align_top_elem   (win, elem)
-    case {.Down}:  align_bottom_elem(win, elem)
-    case {.Left}:  align_left_elem  (win, elem)
-    case {.Right}: align_right_elem (win, elem)
+    case {.Up}:    align_elem_top   (win, elem)
+    case {.Down}:  align_elem_bottom(win, elem)
+    case {.Left}:  align_elem_left  (win, elem)
+    case {.Right}: align_elem_right (win, elem)
     }
 }
 
 
-align_left_elem :: proc(win: rawptr, elem: rawptr) {
+align_elem_left :: proc(win: rawptr, elem: rawptr) {
     (cast(^Rect)elem).x = (cast(^Rect)win).x
 }
 
-align_right_elem :: proc(win: rawptr, elem: rawptr) {
+align_elem_right :: proc(win: rawptr, elem: rawptr) {
     w_rect := cast(^Rect)win
     e_rect := cast(^Rect)elem
 
     e_rect.x = (w_rect.x + w_rect.w) - e_rect.w
 }
 
-align_top_elem :: proc(win: rawptr, elem: rawptr) {
+align_elem_top :: proc(win: rawptr, elem: rawptr) {
     (cast(^Rect)elem).y = (cast(^Rect)win).y
 }
 
-align_bottom_elem :: proc(win: rawptr, elem: rawptr) {
+align_elem_bottom :: proc(win: rawptr, elem: rawptr) {
     w_rect := cast(^Rect)win
     e_rect := cast(^Rect)elem
 
@@ -125,46 +125,6 @@ split_vertical :: proc(win: rawptr, elems: ..rawptr) {
 // }
 
 
-// Padded ----------------------------------------------------------------------------------------------------------- //
-split_horizontal_padded :: proc(win: rawptr, padding: Padding, elems: ..rawptr) {
-    rect := cast(^Rect)win
-    x := rect.x
-    y := rect.y + padding[.Up]
-    // win.w = n*(pad_l + w + pad_r) -> solving for w we get:
-    w := (rect.w / len(elems)) - (padding[.Left] + padding[.Right])
-    h := rect.h - padding[.Down] - padding[.Up]
-
-    for e, i in elems {
-        r := cast(^Rect)e
-
-        r.x = x + padding[.Left] + i*(padding[.Left] + w + padding[.Right])
-        r.w = w
-        
-        r.y = y
-        r.h = h
-    }
-}
-
-
-split_vertical_padded :: proc(win: rawptr, padding: Padding, elems: ..rawptr) {
-    rect := cast(^Rect)win
-    x := rect.x + padding[.Left]
-    y := rect.y
-    w := rect.w - padding[.Left] - padding[.Right]
-    // win.h = n*(pad_u + h + pad_d) -> solving for h we get:
-    h := (rect.h / len(elems)) - (padding[.Up] + padding[.Down])
-
-    for e, i in elems {
-        r := cast(^Rect)e
-
-        r.y = y + padding[.Up] + i*(padding[.Up] + h + padding[.Down])
-        r.h = h
-        
-        r.x = x
-        r.w = w
-    }
-}
-
 // Stacks ----------------------------------------------------------------------------------------------------------- //
 // Elements share their adjacent border so it isn't doubled.
 // `border` is the thickness of the shared edge (usually 1).
@@ -199,43 +159,6 @@ stack_vertical :: proc(win: rawptr, border: int, elems: ..rawptr) {
         r.h = h
     }
 }
-
-// Padded ----------------------------------------------------------------------------------------------------------- //
-// stack_horizontal_padded :: proc(win: rawptr, padding: Padding, border: int, elems: ..rawptr) {
-//     rect := cast(^Rect)win
-
-//     n := len(elems)
-//     // Available width after outer padding, then collapsed across n cells
-//     avail := rect.w - padding[.Left] - padding[.Right]
-//     w := (avail + (n - 1) * border) / n
-//     h := rect.h - padding[.Up] - padding[.Down]
-
-//     for e, i in elems {
-//         r := cast(^Rect)e
-
-//         r.x = rect.x + padding[.Left] + i * (w - border)
-//         r.y = rect.y + padding[.Up]
-//         r.w = w
-//         r.h = h
-//     }
-// }
-
-// stack_vertical_padded :: proc(win: rawptr, padding: Padding, border: int, elems: ..rawptr) {
-//     rect := cast(^Rect)win
-
-//     n     := len(elems)
-//     avail := rect.h - padding[.Up] - padding[.Down]
-//     h     := (avail + (n - 1) * border) / n
-//     w     := rect.w - padding[.Left] - padding[.Right]
-
-//     for e, i in elems {
-//         r := cast(^Rect)e
-
-//         r.x = rect.x + padding[.Left]
-//         r.y = rect.y + padding[.Up] + i * (h - border)
-//         r.h = h
-//     }
-// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// CHECK CODE BELOW !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
