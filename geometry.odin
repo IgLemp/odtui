@@ -31,14 +31,15 @@ center_vertical :: proc(win: rawptr, elem: rawptr) {
 
 
 align_elem :: proc(win: rawptr, align: Alignment, elem: rawptr) {
-    switch align {
-    case {.Up, .Down}:    center_vertical(win, elem)
-    case {.Left, .Right}: center_horizontal(win, elem)
-    case {.Up}:    align_elem_top   (win, elem)
-    case {.Down}:  align_elem_bottom(win, elem)
-    case {.Left}:  align_elem_left  (win, elem)
-    case {.Right}: align_elem_right (win, elem)
-    }
+    if      align & {.Up}   != nil &&
+            align & {.Down} != nil { center_vertical  (win, elem) }
+    else if align & {.Up}   != nil { align_elem_top   (win, elem) }
+    else if align & {.Down} != nil { align_elem_bottom(win, elem) }
+
+    if      align & {.Left}  != nil &&
+            align & {.Right} != nil { center_horizontal(win, elem) }
+    else if align & {.Left}  != nil { align_elem_left  (win, elem) }
+    else if align & {.Right} != nil { align_elem_right (win, elem) }
 }
 
 
